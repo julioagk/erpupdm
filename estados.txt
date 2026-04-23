@@ -1,0 +1,44 @@
+CADA MENU EN UN PAGINA DIFERENTE
+
+-DASHBOARD PRINCIPAL
+muestre métricas en las que se muestre:
+
+VENTAS POR DIA
+GASTOS POR DIA
+SALDO EN BANCO
+
+
+-MENU DE BANCO
+
+PENDIENTE
+
+
+
+-MENU DE PROVEDORES y GASTOS
+
+Dar de alta proveedores
+Cargar facturas de gasto/compra por proveedor, con cargar la factura seas capaz de leer el gasto en numero
+Elegir el tipo de gasto manual
+Mostrar lista de facturas de gasto/compra
+
+
+-MENU DE VENTAS
+
+Cargar facturas de venta y poder leer las facturas de venta para que no tengan que hacerlo manual
+y muestre una lista de facturas de venta
+
+
+
+-MENU DE CONTABILIDAD
+
+Estado de resultados con filtros de día, semana y mes
+
+Desglose de cada ingreso
+Desglose de cada gasto y proveedor
+
+Con ayuda de una IA, mostrar resultado de como va la empresa, si es rentable si no lo es, etc
+
+
+BACKEND EN RAILWAY
+
+FROTEND EN VERCEL

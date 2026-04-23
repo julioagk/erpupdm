@@ -1,0 +1,18 @@
+{
+  "name": "estados-financieros",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace frontend\" \"npm run dev --workspace backend\"",
+    "dev:backend": "npm run dev --workspace backend",
+    "build": "npm run build --workspace frontend && npm run build --workspace backend",
+    "check": "npm run check --workspace frontend && npm run check --workspace backend",
+    "lint": "npm run check"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
