@@ -83,8 +83,8 @@ export function parseInvoiceText(text: string): ParsedInvoice {
 
   // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
   const folioPattern = /(?:factura|invoice|folio|no\.?|numero|n[úu]m(?:ero)?|serie\s*y\s*folio)[\s:#-]*([A-Z0-9-]+)/i;
-  const issuerPattern = /(emisor|proveedor|razon\s*social(?:\s*emisor)?|razon\s*social:|nombre\s*emisor|nombre\s*del\s*emisor|expedido\s*por)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
-  const receiverPattern = /(receptor|cliente|razon\s*social(?:\s*receptor)?|nombre\s*receptor|nombre\s*del\s*receptor|facturado\s*a)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
+  const issuerPattern = /(?:emisor|proveedor|razon\s*social(?:\s*emisor)?|razon\s*social:|nombre\s*emisor|nombre\s*del\s*emisor|expedido\s*por)[\s:#-]*([^\r\n]+)/i;
+  const receiverPattern = /(?:receptor|cliente|razon\s*social(?:\s*receptor)?|nombre\s*receptor|nombre\s*del\s*receptor|facturado\s*a)[\s:#-]*([^\r\n]+)/i;
   
   const amountRegex = /(?:\$|MXN\s?)?\s?([0-9]{1,3}(?:[.,][0-9]{3})*[.,][0-9]{2}|[0-9]+[.,][0-9]{2})/;
   

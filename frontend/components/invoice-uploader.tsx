@@ -242,10 +242,12 @@ export function InvoiceUploader({
                   <input className="form__input" type="datetime-local" value={fields.date} onChange={e => setField('date', e.target.value)} />
                 </label>
                 
-                <label className="form__row">
-                  <span className="form__label">Método de Pago</span>
-                  <input className="form__input" value={fields.paymentMethod || 'PUE - Pago en una sola exhibición'} onChange={e => setField('paymentMethod', e.target.value)} />
-                </label>
+                {isSale && (
+                  <label className="form__row">
+                    <span className="form__label">Método de Pago</span>
+                    <input className="form__input" value={fields.paymentMethod || 'PUE - Pago en una sola exhibición'} onChange={e => setField('paymentMethod', e.target.value)} />
+                  </label>
+                )}
                 
                 {showCategorySelector && (
                   <label className="form__row" style={{ gridColumn: 'span 2' }}>
