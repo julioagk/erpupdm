@@ -105,10 +105,32 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   const subtotal = subtotalMatch ? normalizeNumber(subtotalMatch[1]) : 0;
   const iva = ivaMatch ? normalizeNumber(ivaMatch[1]) : 0;
 
-  const folioMatch = normalizedText.match(folioPattern);
-  const issuerMatch = normalizedText.match(issuerPattern);
-  const receiverMatch = normalizedText.match(receiverPattern);
-  
+  let issuer = issuerMatch?.[2]?.trim() || '';
+  let receiver = receiverMatch?.[2]?.trim() || '';
+  let folio = folioMatch ? folioMatch[1].trim() : '';
+
+  // Fallback para Emisor: Buscar antes de un RFC o la primera línea significativa
+  if (!issuer) {
+    const rfcMatch = normalizedText.match(/([A-Z\s0-9.,&-]+)\s+RFC\s*[:\s]+[A-Z]{3,4}[0-9]{6}/i);
+    if (rfcMatch) {
+      issuer = rfcMatch[1].trim();
+    } else {
+      // Tomar la primera línea que no sea un número o fecha corta
+      const lines = normalizedText.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+      issuer = lines[0] || 'Emisor no identificado';
+    }
+  }
+
+  // Fallback para Folio: Buscar UUID si no hay folio corto
+  if (!folio) {
+    const uuidMatch = normalizedText.match(/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/i);
+    if (uuidMatch) folio = uuidMatch[0].slice(-12); // Tomar los últimos 12 del UUID
+    else folio = 'SIN-FOLIO';
+  }
+
+  // Limpieza final de issuer para quitar ruidos comunes
+  issuer = issuer.replace(/(?:RFC|TEL|DOMICILIO|PAGINA|WWW|EMAIL).*/i, '').trim();
+
   let parsedDate = new Date().toISOString().slice(0, 16); // YYYY-MM-DDThh:mm
   if (dateMatch) {
     // Si viene como 2026-04-13T14:41:56, quitamos los segundos para datetime-local
@@ -132,9 +154,9 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   }
   
   return {
-    issuer: issuerMatch?.[2]?.trim() || 'Emisor no identificado',
-    receiver: receiverMatch?.[2]?.trim() || 'Receptor no identificado',
-    folio: folioMatch ? folioMatch[1].trim() : 'SIN-FOLIO',
+    issuer: issuer,
+    receiver: receiver || 'Receptor no identificado',
+    folio: folio,
     date: parsedDate,
     total: total,
     subtotal: subtotal,
