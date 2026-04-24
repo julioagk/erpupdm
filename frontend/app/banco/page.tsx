@@ -1,155 +1,81 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
-import { dashboardSeed, expenseInvoices, money, salesInvoices, sumAmounts } from '@/lib/data';
-import { useBalance } from '@/context/balance-context';
+import { money, type BankMovement } from '@/lib/data';
+import { fetchFromApi } from '@/lib/api';
 
 export default function BancoPage() {
-  const { bankBalance } = useBalance();
+  const [movements, setMovements] = useState<BankMovement[]>([]);
+  const [balance, setBalance] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // ── Todo lo que se sube ya está confirmado (sin estados) ──────────────────
-  const totalSales    = sumAmounts(salesInvoices);   // Suma total de VENTAS registradas
-  const totalExpenses = sumAmounts(expenseInvoices); // Suma total de COMPRAS registradas
+  useEffect(() => {
+    async function loadBank() {
+      try {
+        const data = await fetchFromApi('/api/bank');
+        setMovements(data.items || []);
+        setBalance(data.balance || 0);
+      } catch (error) {
+        console.error('Error cargando banco:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadBank();
+  }, []);
 
-  // ── Balance ───────────────────────────────────────────────────────────────
-  const totalAssets      = bankBalance + totalSales;   // Banco + lo que se ha vendido
-  const totalLiabilities = totalExpenses;              // Todo lo que se ha comprado/gastado
-  const capitalTotal     = totalAssets - totalLiabilities;
+  if (loading) {
+    return (
+      <WorkspaceShell active="/banco" eyebrow="Banco" title="Cargando estado de cuenta..." subtitle="Sincronizando con Railway...">
+        <div style={{ padding: '40px', textAlign: 'center' }}>Consultando saldo en tiempo real...</div>
+      </WorkspaceShell>
+    );
+  }
 
   return (
     <WorkspaceShell
       active="/banco"
-      eyebrow="Banco"
-      title="Estado actual de la empresa"
-      subtitle="Calculado automáticamente desde las listas de Ventas y Compras. Todo lo registrado ya está confirmado."
+      eyebrow="Finanzas"
+      title="Estado de cuenta"
+      subtitle="Aquí se ve el saldo real de Banorte y los movimientos conciliados en tu base de datos."
     >
-      <section className="stack">
-
-        {/* ── Resumen superior ─────────────────────────────────────────── */}
-        <div className="card">
+      <section className="dashboard__grid">
+        <article className="card dashboard__bankPanel" style={{ gridColumn: 'span 12' }}>
           <div className="card__header">
             <div>
-              <h3 className="card__title">Resumen financiero</h3>
-              <p className="card__label">Datos extraídos directamente del sistema.</p>
+              <h3 className="card__title">Saldo en Banorte</h3>
+              <p className="card__label">Saldo disponible calculado de todas tus operaciones.</p>
             </div>
-            <span className="badge">Banco principal</span>
+            <span className="badge badge--success">En Línea</span>
           </div>
           <div className="card__body">
-            <div className="bank__summaryGrid">
-              <article className="bank__summaryCard">
-                <p className="bank__summaryLabel">Activo (Valor)</p>
-                <strong>{money(totalAssets)}</strong>
-                <span>Banco + Ventas registradas</span>
-              </article>
-              <article className="bank__summaryCard">
-                <p className="bank__summaryLabel">Pasivo (Compromisos)</p>
-                <strong>{money(totalLiabilities)}</strong>
-                <span>Total de compras y gastos</span>
-              </article>
-              <article className="bank__summaryCard">
-                <p className="bank__summaryLabel">Capital (Riqueza Real)</p>
-                <strong>{money(capitalTotal)}</strong>
-                <span>Activo − Pasivo</span>
-              </article>
-            </div>
-            <div className="chip-row" style={{ marginTop: '16px' }}>
-              <span className="chip">Ventas registradas: {salesInvoices.length}</span>
-              <span className="chip">Compras registradas: {expenseInvoices.length}</span>
-              <span className="chip">Saldo Banorte: {money(bankBalance)}</span>
+            <div className="dashboard__bigAmount" style={{ fontSize: '3rem' }}>{money(balance)}</div>
+            <p className="footer-note">Actualizado automáticamente con cada factura registrada.</p>
+          </div>
+        </article>
+
+        <article className="card" style={{ gridColumn: 'span 12' }}>
+          <div className="card__header">
+            <h3 className="card__title">Últimos Movimientos</h3>
+          </div>
+          <div className="card__body">
+            <div className="list">
+              {movements.map((m) => (
+                <div key={m.id} className="list__item">
+                  <div className="list__meta">
+                    <strong>{m.concept}</strong>
+                    <span>{m.date}</span>
+                  </div>
+                  <div className="list__amount" style={{ color: m.kind === 'ingreso' ? '#27ae60' : '#c0392b' }}>
+                    {m.kind === 'ingreso' ? '+' : '-'}{money(m.amount)}
+                  </div>
+                </div>
+              ))}
+              {movements.length === 0 && <p style={{ padding: '20px', color: '#666' }}>No hay movimientos registrados aún.</p>}
             </div>
           </div>
-        </div>
-
-        {/* ── Desglose ─────────────────────────────────────────────────── */}
-        <section className="bank__breakdownGrid">
-
-          {/* ACTIVO */}
-          <article className="card">
-            <div className="card__header">
-              <div>
-                <h3 className="card__title">Activo (Valor)</h3>
-                <p className="card__label">Lo que la empresa tiene.</p>
-              </div>
-            </div>
-            <div className="card__body stack">
-              <div className="bank__lineItem">
-                <div>
-                  <strong>Dinero en banco</strong>
-                  <p>Saldo actual en Banorte</p>
-                </div>
-                <strong>{money(bankBalance)}</strong>
-              </div>
-              <div className="bank__lineItem">
-                <div>
-                  <strong>Total ventas ({salesInvoices.length} facturas)</strong>
-                  <p>Suma de todas las ventas registradas en el sistema</p>
-                </div>
-                <strong>{money(totalSales)}</strong>
-              </div>
-              <div className="bank__lineItem bank__lineItem--total">
-                <div><strong>Total Activo</strong></div>
-                <strong>{money(totalAssets)}</strong>
-              </div>
-            </div>
-          </article>
-
-          {/* PASIVO */}
-          <article className="card">
-            <div className="card__header">
-              <div>
-                <h3 className="card__title">Pasivo (Compromisos)</h3>
-                <p className="card__label">Lo que la empresa ha gastado/comprometido.</p>
-              </div>
-            </div>
-            <div className="card__body stack">
-              <div className="bank__lineItem">
-                <div>
-                  <strong>Total compras y gastos ({expenseInvoices.length} facturas)</strong>
-                  <p>Suma de todas las compras y gastos registrados</p>
-                </div>
-                <strong>{money(totalExpenses)}</strong>
-              </div>
-              <div className="bank__lineItem bank__lineItem--total">
-                <div><strong>Total Pasivo</strong></div>
-                <strong>{money(totalLiabilities)}</strong>
-              </div>
-            </div>
-          </article>
-
-          {/* CAPITAL */}
-          <article className="card">
-            <div className="card__header">
-              <div>
-                <h3 className="card__title">Capital (Riqueza Real)</h3>
-                <p className="card__label">Lo que le queda al negocio: Activo − Pasivo.</p>
-              </div>
-            </div>
-            <div className="card__body stack">
-              <div className="bank__lineItem">
-                <div>
-                  <strong>Activo total</strong>
-                  <p>Banco + Ventas</p>
-                </div>
-                <strong>{money(totalAssets)}</strong>
-              </div>
-              <div className="bank__lineItem">
-                <div>
-                  <strong>Pasivo total</strong>
-                  <p>Compras y gastos registrados</p>
-                </div>
-                <strong>− {money(totalLiabilities)}</strong>
-              </div>
-              <div className="bank__lineItem bank__lineItem--total">
-                <div>
-                  <strong>Capital neto</strong>
-                  <p>Riqueza real de la empresa</p>
-                </div>
-                <strong>{money(capitalTotal)}</strong>
-              </div>
-            </div>
-          </article>
-
-        </section>
+        </article>
       </section>
     </WorkspaceShell>
   );

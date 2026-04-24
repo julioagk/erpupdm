@@ -127,6 +127,49 @@ app.get('/api/sales', async (_request, response) => {
   response.json({ items: items.map(i => ({ ...i, customer: i.customerName })) });
 });
 
+app.post('/api/invoices', async (request, response) => {
+  try {
+    const body = request.body;
+    const isExpense = body.type === 'EXPENSE';
+
+    const newItem = await prisma.invoice.create({
+      data: {
+        date: body.date,
+        amount: body.amount,
+        subtotal: body.subtotal || 0,
+        iva: body.iva || 0,
+        category: body.category || 'Sin categoría',
+        source: body.source || 'Manual',
+        invoiceNumber: body.invoiceNumber,
+        description: body.description || '',
+        type: body.type, // 'SALE' o 'EXPENSE'
+        providerName: isExpense ? body.provider : null,
+        customerName: !isExpense ? body.customer : null,
+        status: body.status || 'confirmado'
+      }
+    });
+
+    // Si es un gasto, también actualizamos el saldo del banco (restamos)
+    if (isExpense) {
+      await prisma.globalSettings.update({
+        where: { id: 'global' },
+        data: { bankBalance: { decrement: body.amount } }
+      });
+    } else {
+      // Si es una venta, sumamos al saldo
+      await prisma.globalSettings.update({
+        where: { id: 'global' },
+        data: { bankBalance: { increment: body.amount } }
+      });
+    }
+
+    response.status(201).json(newItem);
+  } catch (error) {
+    console.error(error);
+    response.status(500).json({ error: 'Error al guardar la factura' });
+  }
+});
+
 app.get('/api/bank', async (_request, response) => {
   const settings = await prisma.globalSettings.findUnique({ where: { id: 'global' } });
   const items = await prisma.bankMovement.findMany({ orderBy: { date: 'desc' } });
