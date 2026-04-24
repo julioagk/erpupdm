@@ -86,9 +86,9 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   const issuerPattern = /(emisor|proveedor|razon social emisor|razon social:|nombre emisor|nombre del emisor)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
   const receiverPattern = /(receptor|cliente|razon social receptor|nombre receptor|nombre del receptor|facturado a)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
   
-  const amountRegex = /(?:\$|MXN\s?)?\s?([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?|[0-9]+(?:[.,][0-9]{2})?)/;
+  const amountRegex = /(?:\$|MXN\s?)?\s?([0-9]{1,3}(?:[.,][0-9]{3})*[.,][0-9]{2}|[0-9]+[.,][0-9]{2})/;
   
-  const totalPattern = new RegExp(`(?:total|importe total)[\\s:#-]*${amountRegex.source}`, 'i');
+  const totalPattern = new RegExp(`\\b(?:total|importe total)\\b[\\s:#-]*${amountRegex.source}`, 'i');
   const subtotalPattern = new RegExp(`(?:subtotal|sub-total)[\\s:#-]*${amountRegex.source}`, 'i');
   const ivaPattern = new RegExp(`(?:iva|impuesto al valor agregado|traslados)[\\s:#-]*${amountRegex.source}`, 'i');
 
