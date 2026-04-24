@@ -1,149 +1,90 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
-import { buildAIInsight, buildAccountingSummary, money } from '@/lib/data';
+import { money } from '@/lib/data';
+import { fetchFromApi } from '@/lib/api';
 
 export default function AnalisisPage() {
-  const summaryMonth = buildAccountingSummary('month');
-  const summaryWeek = buildAccountingSummary('week');
-  const summaryDay = buildAccountingSummary('day');
-  const insightMonth = buildAIInsight('month');
-  const insightWeek = buildAIInsight('week');
-  const insightDay = buildAIInsight('day');
+  const [insight, setInsight] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadInsight() {
+      try {
+        const result = await fetchFromApi('/api/ai/insight?range=month');
+        setInsight(result);
+      } catch (error) {
+        console.error('Error cargando análisis IA:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadInsight();
+  }, []);
+
+  if (loading) {
+    return (
+      <WorkspaceShell active="/contabilidad/analisis" eyebrow="Análisis" title="IA Analizando..." subtitle="Procesando tu flujo de caja real para generar consejos...">
+        <div style={{ padding: '40px', textAlign: 'center' }}>La IA está estudiando tus números en Railway...</div>
+      </WorkspaceShell>
+    );
+  }
 
   return (
     <WorkspaceShell
       active="/contabilidad/analisis"
-      eyebrow="Analisis y rentabilidad"
-      title="Metricas clave y tendencias del negocio"
-      subtitle="Profundiza en la rentabilidad con comparativas diarias, semanales y mensuales, y lecturas automaticas de tendencias."
+      eyebrow="Inteligencia de Negocio"
+      title="Análisis Financiero IA"
+      subtitle="Interpretación automática de tu salud financiera basada en datos de PostgreSQL."
     >
-      <section className="stack">
-        <div className="card">
+      <section className="grid" style={{ gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px' }}>
+        <article className="card" style={{ gridColumn: 'span 8' }}>
           <div className="card__header">
             <div>
-              <h3 className="card__title">Comparativa de periodos</h3>
-              <p className="card__label">Analiza tendencias de rentabilidad y eficiencia.</p>
+              <h3 className="card__title">Resumen Ejecutivo</h3>
+              <p className="card__label">Perspectiva estratégica generada por el motor de análisis.</p>
             </div>
+            <span className={`badge ${insight?.status === 'saludable' ? 'badge--success' : ''}`}>{insight?.status?.toUpperCase()}</span>
           </div>
           <div className="card__body stack">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Periodo</th>
-                  <th>Ventas</th>
-                  <th>Gastos</th>
-                  <th>Utilidad</th>
-                  <th>Margen %</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>Dia</strong></td>
-                  <td>{money(summaryDay.salesTotal)}</td>
-                  <td>{money(summaryDay.expenseTotal)}</td>
-                  <td>{money(summaryDay.net)}</td>
-                  <td><strong>{summaryDay.margin.toFixed(1)}%</strong></td>
-                </tr>
-                <tr>
-                  <td><strong>Semana</strong></td>
-                  <td>{money(summaryWeek.salesTotal)}</td>
-                  <td>{money(summaryWeek.expenseTotal)}</td>
-                  <td>{money(summaryWeek.net)}</td>
-                  <td><strong>{summaryWeek.margin.toFixed(1)}%</strong></td>
-                </tr>
-                <tr>
-                  <td><strong>Mes</strong></td>
-                  <td>{money(summaryMonth.salesTotal)}</td>
-                  <td>{money(summaryMonth.expenseTotal)}</td>
-                  <td>{money(summaryMonth.net)}</td>
-                  <td><strong>{summaryMonth.margin.toFixed(1)}%</strong></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="split">
-          <div className="card">
-            <div className="card__header">
-              <div>
-                <h3 className="card__title">Lectura del mes</h3>
-                <p className="card__label">Analisis automatico del desempe ejecutivo.</p>
-              </div>
+            <div className="chip-row">
+              <span className="chip">Análisis Ejecutivo</span>
+              <span className="chip">Estado: {insight?.status}</span>
             </div>
-            <div className="card__body stack">
-              <div className="chip-row">
-                <span className="chip">Análisis Ejecutivo</span>
-                <span className="chip">Estado: {insightMonth.status}</span>
-              </div>
-              <p className="footer-note">{insightMonth.message}</p>
-              <div className="list">
-                <div className="list__item">
-                  <div className="list__meta"><strong>IA:</strong> Análisis generado basado en el flujo de caja actual.</div>
-                </div>
+            <p className="footer-note" style={{ fontSize: '1.2rem', color: '#2c3e50', lineHeight: '1.6' }}>
+              {insight?.message}
+            </p>
+            <div className="list">
+              <div className="list__item">
+                <div className="list__meta"><strong>IA:</strong> Análisis generado basado en el flujo de caja real detectado en Railway.</div>
               </div>
             </div>
           </div>
+        </article>
 
-          <div className="card">
-            <div className="card__header">
-              <div>
-                <h3 className="card__title">Proximas acciones</h3>
-                <p className="card__label">Recomendaciones sugeridas por el motor IA.</p>
-              </div>
-            </div>
-            <div className="card__body list">
-              {insightMonth.nextActions.map((action) => (
-                <div key={action} className="list__item">
-                  <div className="list__meta">{action}</div>
+        <article className="card" style={{ gridColumn: 'span 4' }}>
+          <div className="card__header">
+            <h3 className="card__title">Acciones Sugeridas</h3>
+          </div>
+          <div className="card__body">
+            <div className="stack" style={{ gap: '12px' }}>
+              {insight?.nextActions?.map((action: string, i: number) => (
+                <div key={i} className="chip" style={{ padding: '15px', background: '#f0f4f0', border: '1px solid #ddd', display: 'block', borderRadius: '12px' }}>
+                  <strong>{i + 1}.</strong> {action}
                 </div>
               ))}
+              {(!insight?.nextActions || insight.nextActions.length === 0) && <p>No hay acciones sugeridas por ahora.</p>}
             </div>
           </div>
-        </div>
+        </article>
 
-        <div className="card">
-          <div className="card__header">
-            <div>
-              <h3 className="card__title">Metricas por periodo</h3>
-              <p className="card__label">Indicadores clave de desempe e rentabilidad.</p>
-            </div>
+        <article className="card" style={{ gridColumn: 'span 12', background: 'linear-gradient(135deg, #20301f, #2c3e50)', color: 'white' }}>
+          <div className="card__body">
+            <h3 className="card__title" style={{ color: '#bfff75' }}>Próximamente: Predicción de Flujo</h3>
+            <p>Estamos entrenando el modelo para predecir tus gastos del próximo mes basándonos en tu historial de Railway.</p>
           </div>
-          <div className="card__body stack">
-            <div className="split">
-              <div className="metric">
-                <div className="metric__value">{summaryMonth.margin.toFixed(1)}%</div>
-                <div className="metric__meta">Margen mensual</div>
-                <div className="metric__bar">
-                  <span style={{ width: `${Math.min(summaryMonth.margin, 100)}%` }} />
-                </div>
-              </div>
-
-              <div className="metric">
-                <div className="metric__value">{(summaryMonth.salesTotal / (summaryMonth.salesTotal + summaryMonth.expenseTotal)).toFixed(0)}%</div>
-                <div className="metric__meta">Proporcion de ingresos</div>
-                <div className="metric__bar">
-                  <span style={{ width: `${(summaryMonth.salesTotal / (summaryMonth.salesTotal + summaryMonth.expenseTotal)) * 100}%` }} />
-                </div>
-              </div>
-
-              <div className="metric">
-                <div className="metric__value">{(summaryMonth.expenseTotal / summaryMonth.salesTotal).toFixed(2)}x</div>
-                <div className="metric__meta">Ratio gasto/venta</div>
-                <div className="metric__bar">
-                  <span style={{ width: `${Math.min((summaryMonth.expenseTotal / summaryMonth.salesTotal) * 100, 100)}%` }} />
-                </div>
-              </div>
-
-              <div className="metric">
-                <div className="metric__value">{summaryMonth.sales.length + summaryMonth.expenses.length}</div>
-                <div className="metric__meta">Operaciones totales</div>
-                <div className="metric__bar">
-                  <span style={{ width: `${Math.min((summaryMonth.sales.length + summaryMonth.expenses.length) * 10, 100)}%` }} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        </article>
       </section>
     </WorkspaceShell>
   );

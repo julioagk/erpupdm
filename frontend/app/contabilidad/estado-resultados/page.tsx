@@ -1,302 +1,135 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
-import { buildUpdmReport, buildAIInsight, money } from '@/lib/data';
-
-const ranges = ['day', 'week', 'month', 'year'] as const;
-const rangeLabels: Record<string, string> = { day: 'Día', week: 'Semana', month: 'Mes', year: 'Año' };
+import { money } from '@/lib/data';
+import { fetchFromApi } from '@/lib/api';
 
 export default function EstadoResultadosPage() {
-  const [range, setRange] = useState<(typeof ranges)[number]>('month');
-  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  function handlePrint() {
-    window.print();
+  useEffect(() => {
+    async function loadAccounting() {
+      try {
+        const result = await fetchFromApi('/api/accounting?range=month');
+        setData(result);
+      } catch (error) {
+        console.error('Error cargando contabilidad:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadAccounting();
+  }, []);
+
+  if (loading) {
+    return (
+      <WorkspaceShell active="/contabilidad/estado-resultados" eyebrow="Contabilidad" title="Generando reporte..." subtitle="Calculando estados financieros desde Railway...">
+        <div style={{ padding: '40px', textAlign: 'center' }}>Procesando cifras reales...</div>
+      </WorkspaceShell>
+    );
   }
 
-  const report = useMemo(() => buildUpdmReport(range), [range]);
-  const insight = useMemo(() => buildAIInsight(range), [range]);
-
-  const costOfSalesRows = report.rows.filter(r => r.group === 'COSTO DE VENTAS');
-  const adminExpensesRows = report.rows.filter(r => r.group === 'GASTOS DE VENTA Y ADMINISTRACION');
-
-  const totalCostOfSalesPeriod = costOfSalesRows.reduce((sum, r) => sum + r.period, 0);
-  const totalCostOfSalesAccum = costOfSalesRows.reduce((sum, r) => sum + r.accum, 0);
-  const totalAdminExpensesPeriod = adminExpensesRows.reduce((sum, r) => sum + r.period, 0);
-  const totalAdminExpensesAccum = adminExpensesRows.reduce((sum, r) => sum + r.accum, 0);
-
-  const pct = (val: number, base: number) =>
-    base > 0 ? ((val / base) * 100).toFixed(2) : '0.00';
+  const summary = data?.summary || { salesTotal: 0, expenseTotal: 0, net: 0, margin: 0 };
+  const sales = data?.sales || [];
+  const expenses = data?.expenses || [];
 
   return (
     <WorkspaceShell
       active="/contabilidad/estado-resultados"
-      eyebrow="Contabilidad"
-      title="Estado de resultados"
-      subtitle="Visualización automática bajo el formato UPDM (Periodo vs Acumulado). Sin captura manual, basado en Bancos, Ventas y Compras."
+      eyebrow="Reportes Financieros"
+      title="Estado de Resultados"
+      subtitle="Resumen detallado de ingresos y egresos del periodo actual sincronizado con PostgreSQL."
     >
       <section className="stack">
-
-        {/* ── IA Insight ────────────────────────────────────────────────── */}
-        <div className="card" style={{ borderLeft: '4px solid var(--primary)', background: 'var(--bg-alt)' }}>
-          <div className="card__body">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <span style={{ fontSize: '1.4rem' }}>🤖</span>
-              <h3 className="card__title" style={{ margin: 0 }}>Análisis de Inteligencia Artificial</h3>
-              <span className={`badge ${insight.status === 'saludable' ? 'badge--success' : insight.status === 'critico' ? 'badge--warning' : ''}`}>
-                {insight.status.toUpperCase()}
-              </span>
-            </div>
-            <p style={{ fontSize: '0.92rem', lineHeight: '1.5', margin: '0 0 12px' }}>
-              {insight.message}
-            </p>
-            <div className="chip-row">
-              {insight.nextActions.map((action, i) => (
-                <span key={i} className="chip" style={{ fontSize: '0.8rem', background: '#fff' }}>{action}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Tabla UPDM ────────────────────────────────────────────────── */}
-        <div className="card card--print" id="updm-report">
-          <div className="print-header" style={{ display: "none" }}>
-            <h1>UPDM S.A DE C.V — Estado de Resultados</h1>
-            <p>Periodo: {rangeLabels[range]}</p>
-          </div>
-          <div className="card__header">
-            <div>
-              <h3 className="card__title">UPDM S.A DE C.V</h3>
-              <p className="card__label">Reporte del periodo seleccionado vs Acumulado histórico.</p>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <div className="chip-row">
-                {ranges.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className={`chip ${range === item ? 'chip--active' : ''}`}
-                    onClick={() => setRange(item)}
-                  >
-                    {rangeLabels[item]}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                className="button button--primary"
-                onClick={handlePrint}
-                style={{ fontSize: '0.82rem', padding: '6px 14px' }}
-              >
-                ⬇ Descargar PDF
-              </button>
-            </div>
-          </div>
-
-          <div className="card__body" style={{ overflowX: 'auto' }}>
-            <table className="table table--updm">
-              <thead>
-                <tr>
-                  <th style={{ width: '40%' }}>Concepto</th>
-                  <th style={{ textAlign: 'right' }}>Periodo</th>
-                  <th style={{ textAlign: 'right' }}>%</th>
-                  <th style={{ textAlign: 'right' }}>Acumulado</th>
-                  <th style={{ textAlign: 'right' }}>%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* INGRESOS */}
-                <tr className="table__section-header">
-                  <td colSpan={5}><strong>Ingresos</strong></td>
-                </tr>
-                <tr>
-                  <td>Ventas Nacionales</td>
-                  <td style={{ textAlign: 'right' }}>{money(report.period.sales)}</td>
-                  <td style={{ textAlign: 'right' }}>100.00</td>
-                  <td style={{ textAlign: 'right' }}>{money(report.accum.sales)}</td>
-                  <td style={{ textAlign: 'right' }}>100.00</td>
-                </tr>
-                <tr style={{ borderTop: '1px solid var(--line)' }}>
-                  <td><strong>Total Ingresos</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong>{money(report.period.sales)}</strong></td>
-                  <td style={{ textAlign: 'right' }}>100.00</td>
-                  <td style={{ textAlign: 'right' }}><strong>{money(report.accum.sales)}</strong></td>
-                  <td style={{ textAlign: 'right' }}>100.00</td>
-                </tr>
-
-                {/* EGRESOS */}
-                <tr className="table__section-header">
-                  <td colSpan={5} style={{ paddingTop: '24px' }}><strong>Egresos</strong></td>
-                </tr>
-
-                {/* COSTO DE VENTAS */}
-                <tr>
-                  <td colSpan={5} style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', paddingTop: '10px' }}>
-                    Costo de Ventas
-                  </td>
-                </tr>
-                {costOfSalesRows.map(row => (
-                  <tr key={row.label}>
-                    <td>{row.label}</td>
-                    <td style={{ textAlign: 'right' }}>{money(row.period)}</td>
-                    <td style={{ textAlign: 'right' }}>{pct(row.period, report.period.sales)}</td>
-                    <td style={{ textAlign: 'right' }}>{money(row.accum)}</td>
-                    <td style={{ textAlign: 'right' }}>{pct(row.accum, report.accum.sales)}</td>
-                  </tr>
-                ))}
-                <tr style={{ color: 'var(--primary-strong)', fontWeight: '600' }}>
-                  <td>Total Costo de Ventas</td>
-                  <td style={{ textAlign: 'right' }}>{money(totalCostOfSalesPeriod)}</td>
-                  <td style={{ textAlign: 'right' }}>{pct(totalCostOfSalesPeriod, report.period.sales)}</td>
-                  <td style={{ textAlign: 'right' }}>{money(totalCostOfSalesAccum)}</td>
-                  <td style={{ textAlign: 'right' }}>{pct(totalCostOfSalesAccum, report.accum.sales)}</td>
-                </tr>
-
-                {/* GASTOS ADM */}
-                <tr>
-                  <td colSpan={5} style={{ fontSize: '0.78rem', color: 'var(--muted)', textTransform: 'uppercase', paddingTop: '10px' }}>
-                    Gastos de Venta y Administración
-                  </td>
-                </tr>
-                {adminExpensesRows.map(row => (
-                  <tr key={row.label}>
-                    <td>{row.label}</td>
-                    <td style={{ textAlign: 'right' }}>{money(row.period)}</td>
-                    <td style={{ textAlign: 'right' }}>{pct(row.period, report.period.sales)}</td>
-                    <td style={{ textAlign: 'right' }}>{money(row.accum)}</td>
-                    <td style={{ textAlign: 'right' }}>{pct(row.accum, report.accum.sales)}</td>
-                  </tr>
-                ))}
-                <tr style={{ color: 'var(--primary-strong)', fontWeight: '600' }}>
-                  <td>Total Gastos de Venta y Administración</td>
-                  <td style={{ textAlign: 'right' }}>{money(totalAdminExpensesPeriod)}</td>
-                  <td style={{ textAlign: 'right' }}>{pct(totalAdminExpensesPeriod, report.period.sales)}</td>
-                  <td style={{ textAlign: 'right' }}>{money(totalAdminExpensesAccum)}</td>
-                  <td style={{ textAlign: 'right' }}>{pct(totalAdminExpensesAccum, report.accum.sales)}</td>
-                </tr>
-
-                {/* UTILIDAD */}
-                <tr style={{ borderTop: '2px solid var(--text)' }}>
-                  <td><strong>Utilidad (o Pérdida)</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong style={{ color: report.period.utility >= 0 ? 'var(--primary-strong)' : '#c0392b' }}>{money(report.period.utility)}</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong>{pct(report.period.utility, report.period.sales)}</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong style={{ color: report.accum.utility >= 0 ? 'var(--primary-strong)' : '#c0392b' }}>{money(report.accum.utility)}</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong>{pct(report.accum.utility, report.accum.sales)}</strong></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ── Desglose individual ───────────────────────────────────────── */}
-        <div className="card card--print">
-          <div className="card__header">
-            <div>
-              <h3 className="card__title">Desglose individual</h3>
-              <p className="card__label">Cada ingreso y gasto registrado en el periodo seleccionado.</p>
-            </div>
-            <button
-              type="button"
-              className="chip chip--active"
-              onClick={() => setShowBreakdown(b => !b)}
-            >
-              {showBreakdown ? 'Ocultar' : 'Ver desglose'}
-            </button>
-          </div>
-
-          {showBreakdown && (
-            <div className="card__body stack">
-              {/* Ingresos individuales */}
+        <div className="card dashboard__pdfFrame" style={{ maxWidth: '900px', margin: '0 auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
+          <div className="dashboard__pdfPage" id="print-area">
+            <div className="dashboard__pdfHeader">
               <div>
-                <p style={{ fontWeight: 700, marginBottom: '8px', color: 'var(--primary-strong)' }}>
-                  📈 Ingresos ({report.periodSales.length} facturas)
-                </p>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Cliente / Receptor</th>
-                      <th>Folio</th>
-                      <th>Fecha</th>
-                      <th>Método de Pago</th>
-                      <th style={{ textAlign: 'right' }}>Subtotal</th>
-                      <th style={{ textAlign: 'right' }}>IVA</th>
-                      <th style={{ textAlign: 'right' }}>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.periodSales.length === 0 ? (
-                      <tr><td colSpan={7} style={{ color: 'var(--muted)', textAlign: 'center' }}>Sin ventas en este periodo</td></tr>
-                    ) : (
-                      report.periodSales.map(sale => (
-                        <tr key={sale.id}>
-                          <td>{sale.customer}</td>
-                          <td>{sale.invoiceNumber}</td>
-                          <td>{sale.date}</td>
-                          <td>{sale.paymentMethod}</td>
-                          <td style={{ textAlign: 'right' }}>{money(sale.subtotal ?? 0)}</td>
-                          <td style={{ textAlign: 'right' }}>{money(sale.iva ?? 0)}</td>
-                          <td style={{ textAlign: 'right' }}><strong>{money(sale.amount)}</strong></td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                <p className="dashboard__pdfEyebrow">Reporte Ejecutivo</p>
+                <h2 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.03em' }}>Estado de Resultados</h2>
+                <p style={{ color: '#666' }}>Periodo: Mes Actual (Sincronizado con Railway)</p>
               </div>
-
-              {/* Gastos individuales */}
-              <div style={{ marginTop: '16px' }}>
-                <p style={{ fontWeight: 700, marginBottom: '8px', color: '#c0392b' }}>
-                  📉 Gastos y Compras ({report.periodExpenses.length} facturas)
-                </p>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Proveedor / Emisor</th>
-                      <th>Folio</th>
-                      <th>Fecha</th>
-                      <th>Categoría</th>
-                      <th style={{ textAlign: 'right' }}>Subtotal</th>
-                      <th style={{ textAlign: 'right' }}>IVA</th>
-                      <th style={{ textAlign: 'right' }}>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {report.periodExpenses.length === 0 ? (
-                      <tr><td colSpan={7} style={{ color: 'var(--muted)', textAlign: 'center' }}>Sin gastos en este periodo</td></tr>
-                    ) : (
-                      report.periodExpenses.map(exp => (
-                        <tr key={exp.id}>
-                          <td>{exp.provider}</td>
-                          <td>{exp.invoiceNumber}</td>
-                          <td>{exp.date}</td>
-                          <td><span className="badge">{exp.category}</span></td>
-                          <td style={{ textAlign: 'right' }}>{money(exp.subtotal ?? 0)}</td>
-                          <td style={{ textAlign: 'right' }}>{money(exp.iva ?? 0)}</td>
-                          <td style={{ textAlign: 'right' }}><strong>{money(exp.amount)}</strong></td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+              <div className="dashboard__pdfStamp">
+                <strong>CERTIFICADO</strong>
+                <span>ERP UPDM v1.0</span>
               </div>
             </div>
-          )}
+
+            <div className="dashboard__pdfSummary" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', background: '#f8faf8', padding: '30px', borderRadius: '20px', margin: '30px 0' }}>
+              <div>
+                <span className="card__label">Ingresos Totales</span>
+                <strong style={{ fontSize: '1.5rem', display: 'block', color: '#27ae60' }}>{money(summary.salesTotal)}</strong>
+              </div>
+              <div>
+                <span className="card__label">Egresos Totales</span>
+                <strong style={{ fontSize: '1.5rem', display: 'block', color: '#c0392b' }}>{money(summary.expenseTotal)}</strong>
+              </div>
+              <div>
+                <span className="card__label">Utilidad Neta</span>
+                <strong style={{ fontSize: '1.5rem', display: 'block', color: '#2c3e50' }}>{money(summary.net)}</strong>
+              </div>
+              <div>
+                <span className="card__label">Margen Operativo</span>
+                <strong style={{ fontSize: '1.5rem', display: 'block' }}>{summary.margin.toFixed(1)}%</strong>
+              </div>
+            </div>
+
+            <div className="dashboard__pdfSection">
+              <h3 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>Detalle de Ingresos</h3>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ textAlign: 'left', color: '#888', fontSize: '0.8rem', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '12px' }}>Cliente</th>
+                    <th style={{ padding: '12px' }}>Folio</th>
+                    <th style={{ padding: '12px', textAlign: 'right' }}>Monto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sales.map((sale: any) => (
+                    <tr key={sale.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                      <td style={{ padding: '12px' }}>{sale.customer}</td>
+                      <td style={{ padding: '12px', color: '#888' }}>{sale.invoiceNumber}</td>
+                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600 }}>{money(sale.amount)}</td>
+                    </tr>
+                  ))}
+                  {sales.length === 0 && <tr><td colSpan={3} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>No hay ventas registradas.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="dashboard__pdfSection" style={{ marginTop: '40px' }}>
+              <h3 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>Detalle de Egresos</h3>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ textAlign: 'left', color: '#888', fontSize: '0.8rem', textTransform: 'uppercase' }}>
+                    <th style={{ padding: '12px' }}>Proveedor</th>
+                    <th style={{ padding: '12px' }}>Categoría</th>
+                    <th style={{ padding: '12px', textAlign: 'right' }}>Monto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {expenses.map((exp: any) => (
+                    <tr key={exp.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                      <td style={{ padding: '12px' }}>{exp.provider}</td>
+                      <td style={{ padding: '12px' }}><span className="chip">{exp.category}</span></td>
+                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#c0392b' }}>{money(exp.amount)}</td>
+                    </tr>
+                  ))}
+                  {expenses.length === 0 && <tr><td colSpan={3} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>No hay gastos registrados.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
+          <button className="button button--primary" onClick={() => window.print()}>
+            🖨️ Descargar Reporte PDF
+          </button>
+        </div>
       </section>
-
-      <style jsx>{`
-        .table--updm td, .table--updm th {
-          padding: 6px 10px;
-          font-size: 0.88rem;
-        }
-        .table__section-header td {
-          font-size: 1rem;
-          padding-top: 16px;
-          padding-bottom: 6px;
-        }
-      `}</style>
     </WorkspaceShell>
   );
 }
