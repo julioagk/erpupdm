@@ -221,8 +221,9 @@ export function InvoiceUploader({
         )}
 
         {fields && (
-          <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            <div className="uploader-review" style={{ flex: '1 1 400px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+            {/* 1. Formulario arriba (ancho completo) */}
+            <div className="uploader-review" style={{ width: '100%' }}>
                <div className="uploader-review__grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <label className="form__row">
                   <span className="form__label">Emisor (Proveedor)</span>
@@ -268,18 +269,19 @@ export function InvoiceUploader({
                 </div>
               </div>
 
-              <div className="form__actions" style={{ marginTop: '20px' }}>
-                <button className="button button--primary" style={{ width: '100%' }} type="button" onClick={handleConfirm}>
-                  ✅ Todo correcto, registrar
-                </button>
-                <button className="button button--secondary" style={{ width: '100%' }} type="button" onClick={() => setFields(null)}>
+              <div className="form__actions" style={{ marginTop: '20px', display: 'flex', gap: '15px' }}>
+                <button className="button button--secondary" style={{ flex: 1 }} type="button" onClick={() => setFields(null)}>
                   Volver a intentar
+                </button>
+                <button className="button button--primary" style={{ flex: 2 }} type="button" onClick={handleConfirm}>
+                  ✅ Todo correcto, registrar
                 </button>
               </div>
             </div>
 
+            {/* 2. PDF Abajo (Alto y Ancho completo) */}
             {fields.pdfData && (
-              <div style={{ flex: '1 1 400px', height: '520px', border: '1px solid #ddd', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ width: '100%', height: '75vh', minHeight: '600px', border: '1px solid #ddd', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '10px 15px', background: '#f5f5f5', borderBottom: '1px solid #ddd', fontWeight: 600, fontSize: '0.9rem', color: '#555' }}>
                   📄 Vista previa del documento original
                 </div>
