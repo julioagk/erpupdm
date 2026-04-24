@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { dashboardSeed, money } from '@/lib/data';
 import { useBalance } from '@/context/balance-context';
@@ -55,6 +56,12 @@ export function WorkspaceShell({
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  function handleLogout() {
+    document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    router.push('/login');
+  }
 
   const isActiveNavItem = (href: string, matchPrefix: string) => {
     if (matchPrefix === '/dashboard') return active === '/dashboard';
@@ -98,7 +105,15 @@ export function WorkspaceShell({
             <div className="shell__userAvatar">JF</div>
             <div className="shell__userInfo">
               <strong>Hola, Julio</strong>
-              <span>Administrador</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>Administrador</span>
+                <button 
+                  onClick={handleLogout}
+                  style={{ background: 'none', border: 'none', color: '#c0392b', fontSize: '0.75rem', cursor: 'pointer', padding: 0, fontWeight: 700 }}
+                >
+                  Cerrar Sesión
+                </button>
+              </div>
             </div>
           </div>
 

@@ -1,44 +1,79 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
-import {
-  bankMovements,
-  buildAccountingSummary,
-  dashboardSeed,
-  filterByRange,
-  money,
-  salesInvoices,
-  sumAmounts
-} from '@/lib/data';
+import { money } from '@/lib/data';
 import { useBalance } from '@/context/balance-context';
+import { getDashboardData, getAccountingData } from '@/lib/api';
 
 export default function DashboardPage() {
-  const { bankBalance } = useBalance();
-  const monthSummary = buildAccountingSummary('month');
-  const monthlySales = monthSummary.salesTotal;
-  const monthlyExpenses = monthSummary.expenseTotal;
+  const { bankBalance, setBankBalance } = useBalance();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+  const [accounting, setAccounting] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [dash, acc] = await Promise.all([
+          getDashboardData(),
+          getAccountingData('month')
+        ]);
+        
+        setData(dash);
+        setAccounting(acc);
+        
+        // Sincronizar el saldo global con el del backend si es necesario
+        if (dash.metrics?.bankBalance) {
+          setBankBalance(dash.metrics.bankBalance);
+        }
+      } catch (error) {
+        console.error('Error cargando datos del backend:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [setBankBalance]);
+
+  if (loading) {
+    return (
+      <WorkspaceShell active="/dashboard" eyebrow="Cargando..." title="Conectando con el servidor" subtitle="Estamos recuperando la información financiera en tiempo real desde Railway.">
+        <div style={{ display: 'grid', placeItems: 'center', minHeight: '300px' }}>
+          <div className="loader">Cargando datos...</div>
+        </div>
+      </WorkspaceShell>
+    );
+  }
+
+  // Si falló la carga pero tenemos datos locales como fallback (opcional)
+  const monthlySales = accounting?.summary?.salesTotal || 0;
+  const monthlyExpenses = accounting?.summary?.expenseTotal || 0;
+  const netUtility = accounting?.summary?.net || 0;
+  const margin = accounting?.summary?.margin || 0;
+  
   const monthlyGoal = 60000;
   const salesProgress = Math.min(100, Math.round((monthlySales / monthlyGoal) * 100));
-  const reconciledMovements = bankMovements.filter((movement) => movement.status === 'conciliado').length;
-  const pendingMovements = bankMovements.filter((movement) => movement.status === 'pendiente').length;
-  const salesByDay = filterByRange(salesInvoices, 'day');
-  const todaySales = sumAmounts(salesByDay);
+  
+  const sales = accounting?.sales || [];
+  const expenses = accounting?.expenses || [];
 
   return (
     <WorkspaceShell
       active="/dashboard"
       eyebrow="Pantalla principal"
       title="Visor central del negocio"
-      subtitle="Aqui se ve el Estado de Resultados, la caja real en Banorte y el termometro de ventas del mes actual."
+      subtitle="Aquí se ve el Estado de Resultados real, la caja en Banorte y el termómetro de ventas sincronizado con Railway."
     >
       <section className="dashboard__grid">
         <article className="card dashboard__pdfPanel">
           <div className="card__header">
             <div>
-              <h3 className="card__title">Visualizador de PDF</h3>
-              <p className="card__label">Estado de resultados del mes con ingreso, gasto y utilidad neta.</p>
+              <h3 className="card__title">Estado de Resultados (Real)</h3>
+              <p className="card__label">Datos frescos obtenidos desde la API de Railway.</p>
             </div>
-            <span className="badge">Estado de resultados</span>
+            <span className="badge">Sincronizado</span>
           </div>
 
           <div className="card__body">
@@ -66,35 +101,37 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <span className="card__label">Utilidad neta</span>
-                    <strong>{money(monthSummary.net)}</strong>
+                    <strong>{money(netUtility)}</strong>
                   </div>
                   <div>
                     <span className="card__label">Margen</span>
-                    <strong>{monthSummary.margin.toFixed(1)}%</strong>
+                    <strong>{margin.toFixed(1)}%</strong>
                   </div>
                 </div>
 
                 <div className="dashboard__pdfSection">
                   <h5>Ingresos principales</h5>
                   <div className="dashboard__pdfRows">
-                    {monthSummary.sales.map((sale) => (
+                    {sales.slice(0, 4).map((sale: any) => (
                       <div key={sale.id} className="dashboard__pdfRow">
                         <span>{sale.customer}</span>
                         <strong>{money(sale.amount)}</strong>
                       </div>
                     ))}
+                    {sales.length === 0 && <p className="footer-note">Sin ventas este mes.</p>}
                   </div>
                 </div>
 
                 <div className="dashboard__pdfSection">
                   <h5>Gastos principales</h5>
                   <div className="dashboard__pdfRows">
-                    {monthSummary.expenses.map((expense) => (
+                    {expenses.slice(0, 4).map((expense: any) => (
                       <div key={expense.id} className="dashboard__pdfRow">
                         <span>{expense.provider}</span>
                         <strong>{money(expense.amount)}</strong>
                       </div>
                     ))}
+                    {expenses.length === 0 && <p className="footer-note">Sin gastos este mes.</p>}
                   </div>
                 </div>
               </div>
@@ -106,16 +143,16 @@ export default function DashboardPage() {
           <div className="card__header">
             <div>
               <h3 className="card__title">Caja de Banco</h3>
-              <p className="card__label">Saldo real en Banorte.</p>
+              <p className="card__label">Saldo real en Banorte (vía API).</p>
             </div>
-            <span className="badge badge--success">Banorte</span>
+            <span className="badge badge--success">En línea</span>
           </div>
 
           <div className="card__body stack">
             <div>
               <p className="dashboard__bigLabel">Saldo disponible</p>
               <div className="dashboard__bigAmount">{money(bankBalance)}</div>
-              <p className="footer-note">Estado de cuenta actualizado según el último reporte.</p>
+              <p className="footer-note">Estado de cuenta actualizado según el último reporte del backend.</p>
             </div>
 
             <div className="dashboard__bankMeter" aria-hidden="true">
@@ -124,7 +161,7 @@ export default function DashboardPage() {
 
             <div className="chip-row">
               <span className="chip">Banco: Banorte</span>
-              <span className="chip">Saldo: {money(bankBalance)}</span>
+              <span className="chip">Estado: Sincronizado</span>
             </div>
           </div>
         </article>
@@ -133,7 +170,7 @@ export default function DashboardPage() {
           <div className="card__header">
             <div>
               <h3 className="card__title">Termómetro de Ventas</h3>
-              <p className="card__label">Cuánto llevamos vendido en el mes actual.</p>
+              <p className="card__label">Progreso real frente a meta mensual.</p>
             </div>
             <span className="badge">Meta mensual</span>
           </div>
@@ -147,14 +184,13 @@ export default function DashboardPage() {
               <div>
                 <p className="dashboard__bigLabel">Ventas acumuladas</p>
                 <div className="dashboard__bigAmount">{money(monthlySales)}</div>
-                <p className="footer-note">Hoy llevamos {money(todaySales)} en ventas.</p>
+                <p className="footer-note">Sincronizado con base de datos en Railway.</p>
               </div>
 
               <div className="chip-row">
-                <span className="chip">Meta del mes: {money(monthlyGoal)}</span>
+                <span className="chip">Meta: {money(monthlyGoal)}</span>
                 <span className="chip">Avance: {salesProgress}%</span>
-                <span className="chip">Ventas registradas: {monthSummary.sales.length}</span>
-                <span className="chip">Gastos del mes: {money(monthlyExpenses)}</span>
+                <span className="chip">Operaciones: {sales.length}</span>
               </div>
 
               <div className="metric__bar">
