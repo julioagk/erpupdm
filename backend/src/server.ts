@@ -3,8 +3,7 @@ import express from 'express';
 import prisma from './db.js';
 import { parseInvoiceText } from './parse-invoice.js';
 import multer from 'multer';
-// @ts-ignore
-const pdf = require('pdf-parse');
+import { createRequire } from 'module';
 
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
@@ -211,23 +210,10 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
       return response.status(400).json({ error: 'No se subió ningún archivo' });
     }
 
-    console.log('Tipo de pdf:', typeof pdf);
-    
-    let pdfFunc: any = pdf;
+    const { default: pdfParse } = await import('pdf-parse');
+    let pdfFunc: any = pdfParse;
     if (typeof pdfFunc !== 'function') {
-      // Intentar varias formas comunes en que los empaquetadores envuelven CJS
-      pdfFunc = pdf.default || pdf;
-      if (typeof pdfFunc !== 'function') {
-        // Buscar cualquier función exportada en el objeto
-        const foundFunc = Object.values(pdf).find(v => typeof v === 'function');
-        if (foundFunc) {
-          pdfFunc = foundFunc;
-        }
-      }
-    }
-
-    if (typeof pdfFunc !== 'function') {
-      throw new Error(`pdf-parse no cargó una función válida. Llaves detectadas: ${Object.keys(pdf).join(', ')}`);
+      pdfFunc = (pdfParse as any).default || pdfParse;
     }
 
     const data = await pdfFunc(request.file.buffer);
