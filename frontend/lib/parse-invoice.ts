@@ -84,9 +84,9 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
   console.log('[PARSE] Texto recibido (primeros 500 chars):', normalizedText.slice(0, 500));
   
-  const folioPattern = /(?:factura|invoice|folio|no\.?\s*(?:de\s*)?(?:factura)?|numero|n[úu]m(?:ero)?|serie\s*y\s*folio|ref(?:erencia)?|ticket|comprobante)[\s:=#-]*([A-Za-z0-9][A-Za-z0-9-]{2,30})/i;
-  const issuerPattern = /(?:emisor|proveedor|raz[oó]n\s*social(?:\s*(?:del\s*)?emisor)?|raz[oó]n\s*social:|nombre\s*(?:del\s*)?emisor|nombre\s*(?:del\s*)?proveedor|expedido\s*por|vendedor)[\s:=#-]*([^\r\n]+)/i;
-  const receiverPattern = /(?:receptor|cliente|raz[oó]n\s*social(?:\s*(?:del\s*)?receptor)?|nombre\s*(?:del\s*)?receptor|nombre\s*(?:del\s*)?cliente|facturado\s*a|comprador)[\s:=#-]*([^\r\n]+)/i;
+  const folioPattern = /\b(?:factura|invoice|folio|serie\s*y\s*folio|ref(?:erencia)?|ticket|comprobante)[\s:=#-]*([A-Za-z0-9][A-Za-z0-9-]{2,20})\b/i;
+  const issuerPattern = /\b(?:emisor|raz[oó]n\s*social(?:\s*(?:del\s*)?emisor)?|nombre\s*(?:del\s*)?emisor|expedido\s*por|vendedor)[\s:=#-]*([^\r\n]{3,100})/i;
+  const receiverPattern = /\b(?:receptor|cliente|raz[oó]n\s*social(?:\s*(?:del\s*)?receptor)?|nombre\s*(?:del\s*)?receptor|nombre\s*(?:del\s*)?cliente|facturado\s*a|comprador)[\s:=#-]*([^\r\n]{3,100})/i;
   
   const amountRegex = /(?:\$|MXN\s?)?\s?([0-9]{1,3}(?:[.,][0-9]{3})*[.,][0-9]{2}|[0-9]+[.,][0-9]{2})/;
   
@@ -115,28 +115,27 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   let folio = folioMatch ? folioMatch[1].trim() : '';
 
   // Fallback para Emisor: Buscar antes de un RFC o la primera línea significativa
-  if (!issuer) {
+  if (!issuer || issuer.toLowerCase().includes('certificaci') || issuer.toLowerCase().includes('sello')) {
     // Buscar: "ALGO RFC: XXXX" → capturar ALGO
     const rfcMatch = normalizedText.match(/([A-ZÀ-ÿ\s0-9.,\&-]{4,60})\s*RFC\s*[:\s]+[A-Z]{3,4}[0-9]{6}/i);
-    if (rfcMatch) {
+    if (rfcMatch && !rfcMatch[1].toLowerCase().includes('receptor') && !rfcMatch[1].toLowerCase().includes('cliente')) {
       issuer = rfcMatch[1].trim();
     } else {
-      // Buscar después de "EMISOR:" con más flexibilidad (saltos de línea)
-      const emisorLineMatch = normalizedText.match(/EMISOR[\s:#-]*\n?\s*([^\n]{4,60})/i);
-      if (emisorLineMatch) {
-        issuer = emisorLineMatch[1].trim();
-      } else {
-        // Tomar la primera línea que parezca un nombre de empresa
-        const lines = normalizedText.split('\n').map(l => l.trim()).filter(l => l.length > 5 && !/^[0-9$]/.test(l));
-        issuer = lines[0] || 'Emisor no identificado';
+      // Tomar la primera línea que parezca un nombre de empresa (evitando ruidos)
+      const lines = normalizedText.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 5 && !/^[0-9$]/.test(l) && !/sello|certificado|timbre|página|digital|fiscal|sucursal/i.test(l));
+      
+      if (lines.length > 0) {
+        issuer = lines[0];
       }
     }
   }
 
   // Fallback para Folio: Buscar UUID, código alfanumérico tras FOLIO, o cualquier código largo
-  if (!folio || folio === 'SIN-FOLIO') {
-    // Paso 1: Buscar "FOLIO" seguido de un código (con soporte para saltos de línea)
-    const specificFolioMatch = normalizedText.match(/FOLIO[\s:=#-]*\n?\s*([A-Za-z0-9][A-Za-z0-9-]{3,30})/i);
+  if (!folio || folio === 'SIN-FOLIO' || /mbre|fiscal|digital/i.test(folio)) {
+    // Paso 1: Buscar "FOLIO" seguido de un código
+    const specificFolioMatch = normalizedText.match(/\bFOLIO[\s:=#-]*\n?\s*([A-Za-z0-9]{3,20})\b/i);
     if (specificFolioMatch) {
       folio = specificFolioMatch[1].trim();
     } else {
@@ -145,13 +144,7 @@ export function parseInvoiceText(text: string): ParsedInvoice {
       if (uuidMatch) {
         folio = uuidMatch[0].slice(-12);
       } else {
-        // Paso 3: Buscar códigos alfanuméricos largos que parezcan folios internos
-        const internalCodeMatch = normalizedText.match(/(?:ticket|comprobante|referencia|transacci[oó]n|operaci[oó]n)[\s:=#-]*\n?\s*([A-Za-z0-9][A-Za-z0-9-]{4,30})/i);
-        if (internalCodeMatch) {
-          folio = internalCodeMatch[1].trim();
-        } else {
-          folio = 'SIN-FOLIO';
-        }
+        folio = 'SIN-FOLIO';
       }
     }
   }
@@ -162,8 +155,8 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   const cleanup = (text: string) => {
     if (!text) return '';
     return text
-      .replace(/^(?:NOMBRE|EMISOR|RECEPTOR|CLIENTE|PROVEEDOR|RAZON\s*SOCIAL)[\s:#-]*/i, '') // Quitar prefijos al inicio
-      .replace(/(?:RFC|TEL|DOMICILIO|PAGINA|WWW|EMAIL|FOLIO|EMISOR|RECEPTOR).*/i, '') // Quitar ruidos que vienen después
+      .replace(/^(?:NOMBRE|EMISOR|RECEPTOR|CLIENTE|PROVEEDOR|RAZON\s*SOCIAL|DESTINATARIO)[\s:#-]*/i, '')
+      .replace(/(?:RFC|TEL|DOMICILIO|PAGINA|WWW|EMAIL|FOLIO|EMISOR|RECEPTOR|SELLO|CERTIFICADO|TIMBRE).*/i, '')
       .trim();
   };
 
