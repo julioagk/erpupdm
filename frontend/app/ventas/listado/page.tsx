@@ -28,11 +28,13 @@ export default function SalesListPage() {
   }, []);
 
   const salesColumns = [
-    { key: 'customer', label: 'Cliente', width: '25%' },
-    { key: 'invoiceNumber', label: 'Folio', width: '15%' },
-    { key: 'date', label: 'Fecha', width: '15%' },
-    { key: 'paymentMethod', label: 'Método Pago', width: '30%' },
-    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '15%' }
+    { key: 'customer', label: 'Cliente', width: '20%' },
+    { key: 'invoiceNumber', label: 'Folio', width: '12%' },
+    { key: 'date', label: 'Fecha', width: '13%' },
+    { key: 'paymentMethod', label: 'Método Pago', width: '15%' },
+    { key: 'subtotal', label: 'Subtotal', render: (v: number) => money(v), width: '13%' },
+    { key: 'iva', label: 'IVA', render: (v: number) => money(v), width: '12%' },
+    { key: 'amount', label: 'Total', render: (v: number) => money(v), width: '15%' }
   ];
 
   async function handleDelete(item: SalesInvoice) {

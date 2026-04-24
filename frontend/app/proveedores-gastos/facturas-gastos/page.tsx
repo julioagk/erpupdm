@@ -45,12 +45,13 @@ export default function ExpenseInvoicesPage() {
   }, []);
 
   const expenseColumns = [
-    { key: 'provider', label: 'Emisor', width: '22%' },
+    { key: 'provider', label: 'Emisor', width: '18%' },
     { key: 'invoiceNumber', label: 'Folio', width: '12%' },
     { key: 'date', label: 'Fecha', width: '12%' },
-    { key: 'category', label: 'Categoría', width: '20%' },
-    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '12%' },
-    { key: 'description', label: 'Descripción', width: '22%' }
+    { key: 'category', label: 'Categoría', width: '18%' },
+    { key: 'subtotal', label: 'Subtotal', render: (v: number) => money(v), width: '12%' },
+    { key: 'iva', label: 'IVA', render: (v: number) => money(v), width: '12%' },
+    { key: 'amount', label: 'Total', render: (v: number) => money(v), width: '16%' }
   ];
 
   /* ── Guardar en Railway ── */
