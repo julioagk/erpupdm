@@ -27,7 +27,6 @@ export default function ExpenseInvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<ExpenseInvoice | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ExpenseInvoice | null>(null);
 
   // Cargar datos reales de Railway
   useEffect(() => {
@@ -54,7 +53,38 @@ export default function ExpenseInvoicesPage() {
     { key: 'amount', label: 'Total', render: (v: number) => money(v), width: '16%' }
   ];
 
-  /* ── Guardar en Railway ── */
+  async function handleDelete(item: ExpenseInvoice) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este gasto?')) return;
+    try {
+      await fetchFromApi(`/api/invoices/${item.id}`, { method: 'DELETE' });
+      setInvoices(prev => prev.filter(i => i.id !== item.id));
+    } catch (e) {
+      alert('Error al eliminar el gasto');
+    }
+  }
+
+  function handleEdit(item: ExpenseInvoice) {
+    setEditingRow({ ...item });
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingRow) return;
+    try {
+      const updated = await fetchFromApi(`/api/invoices/${editingRow.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          ...editingRow,
+          type: 'EXPENSE'
+        })
+      });
+      setInvoices(prev => prev.map(i => i.id === updated.id ? updated : i));
+      setEditingRow(null);
+    } catch (error) {
+      alert('Error al guardar los cambios');
+    }
+  }
+
   async function handleConfirmNew(parsed: any) {
     try {
       const newInvoice = await fetchFromApi('/api/invoices', {
@@ -117,8 +147,8 @@ export default function ExpenseInvoicesPage() {
           searchPlaceholder="Buscar compra..."
           addButtonLabel="+ Agregar compra"
           onAddNew={() => setAddModalOpen(true)}
-          onEdit={(row) => setEditingRow({ ...row })}
-          onDelete={(row) => setDeleteTarget(row)}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
           onViewPdf={handleViewPdf}
           onExport={() => alert('Exportar compras a CSV')}
         />
@@ -141,17 +171,58 @@ export default function ExpenseInvoicesPage() {
         />
       </Modal>
 
-      {/* ── Modal: Editar (Solo visual en este MVP) ── */}
-      <Modal isOpen={!!editingRow} onClose={() => setEditingRow(null)} title="Editar compra" size="lg">
-        <p style={{ padding: '20px' }}>La edición directa estará disponible en la Fase 2 con Prisma completo.</p>
-      </Modal>
+      {/* ── Modal: Editar ── */}
+      <Modal
+        isOpen={!!editingRow}
+        onClose={() => setEditingRow(null)}
+        title="Editar Compra"
+        description="Modifica los datos de la factura de compra."
+        size="md"
+      >
+        {editingRow && (
+          <form className="stack" onSubmit={handleSaveEdit} style={{ marginTop: '20px' }}>
+            <label className="form__row">
+              <span className="form__label">Emisor (Proveedor)</span>
+              <input required className="form__input" value={editingRow.provider || ''} onChange={e => setEditingRow({...editingRow, provider: e.target.value})} />
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <label className="form__row">
+                <span className="form__label">Folio</span>
+                <input required className="form__input" value={editingRow.invoiceNumber || ''} onChange={e => setEditingRow({...editingRow, invoiceNumber: e.target.value})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">Fecha</span>
+                <input required className="form__input" type="datetime-local" value={editingRow.date} onChange={e => setEditingRow({...editingRow, date: e.target.value})} />
+              </label>
+            </div>
+            
+            <label className="form__row">
+              <span className="form__label">Categoría de Gasto</span>
+              <select className="form__select" value={editingRow.category} onChange={e => setEditingRow({...editingRow, category: e.target.value})}>
+                {expenseTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </label>
 
-      {/* ── Modal: Eliminar ── */}
-      <Modal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Eliminar compra" size="sm">
-        <div className="stack">
-          <p>¿Estás seguro de eliminar esta factura de la base de datos?</p>
-          <button className="button button--primary" style={{ background: '#c0392b' }} onClick={() => setDeleteTarget(null)}>🗑️ Eliminar</button>
-        </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <label className="form__row">
+                <span className="form__label">Subtotal</span>
+                <input required type="number" step="0.01" className="form__input" value={editingRow.subtotal || 0} onChange={e => setEditingRow({...editingRow, subtotal: parseFloat(e.target.value)})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">IVA</span>
+                <input required type="number" step="0.01" className="form__input" value={editingRow.iva || 0} onChange={e => setEditingRow({...editingRow, iva: parseFloat(e.target.value)})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">Total</span>
+                <input required type="number" step="0.01" className="form__input" value={editingRow.amount || 0} onChange={e => setEditingRow({...editingRow, amount: parseFloat(e.target.value)})} />
+              </label>
+            </div>
+            <div className="form__actions" style={{ marginTop: '20px', display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
+              <button type="button" className="button button--secondary" onClick={() => setEditingRow(null)}>Cancelar</button>
+              <button type="submit" className="button button--primary">Guardar Cambios</button>
+            </div>
+          </form>
+        )}
       </Modal>
     </WorkspaceShell>
   );
