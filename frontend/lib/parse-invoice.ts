@@ -42,7 +42,7 @@ function normalizeNumber(value: string | null) {
 }
 
 export function parseInvoiceText(text: string): ParsedInvoice {
-  const normalizedText = text.replace(/\r/g, '\n').trim();
+  const normalizedText = text.replace(/\r/g, '\n').replace(/\s*-\s*/g, '-').trim();
   
   // ── 1. INTENTAR PARSEO ESTRUCTURAL (DOMParser para XML) ──
   if (normalizedText.startsWith('<')) {
@@ -82,7 +82,7 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   }
 
   // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
-  const folioPattern = /(?:factura|invoice|folio|no\.?|numero|n[úu]m(?:ero)?)[\s:#-]*([A-Z0-9\s-]+)/i;
+  const folioPattern = /(?:factura|invoice|folio|no\.?|numero|n[úu]m(?:ero)?)[\s:#-]*([A-Z0-9-]+)/i;
   const issuerPattern = /(emisor|proveedor|razon social emisor|razon social:|nombre emisor|nombre del emisor)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
   const receiverPattern = /(receptor|cliente|razon social receptor|nombre receptor|nombre del receptor|facturado a)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
   
@@ -90,7 +90,7 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   
   const totalPattern = new RegExp(`\\b(?:total|importe total)\\b[\\s:#-]*${amountRegex.source}`, 'i');
   const subtotalPattern = new RegExp(`(?:subtotal|sub-total)[\\s:#-]*${amountRegex.source}`, 'i');
-  const ivaPattern = new RegExp(`(?:iva|impuesto al valor agregado|traslados)[\\s:#-]*${amountRegex.source}`, 'i');
+  const ivaPattern = new RegExp(`(?:iva|impuesto al valor agregado|traslados)[^\\r\\n]{0,40}?${amountRegex.source}`, 'i');
 
   const totalMatch = normalizedText.match(totalPattern);
   const subtotalMatch = normalizedText.match(subtotalPattern);

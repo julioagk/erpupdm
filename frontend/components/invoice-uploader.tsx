@@ -221,7 +221,7 @@ export function InvoiceUploader({
         )}
 
         {fields && (
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '30px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '30px', flexWrap: 'nowrap', alignItems: 'stretch' }}>
             {/* 1. Formulario a la izquierda */}
             <div className="uploader-review" style={{ flex: '1 1 350px' }}>
                <div className="uploader-review__grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
