@@ -15,7 +15,7 @@ export function Modal({
   description?: string;
   onClose: () => void;
   children: React.ReactNode;
-  size?: 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
 }>) {
   useEffect(() => {
     if (!isOpen) {

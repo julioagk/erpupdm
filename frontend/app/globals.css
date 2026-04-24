@@ -1018,6 +1018,10 @@ select {
   animation: scaleIn 180ms ease;
 }
 
+.modal__panel--sm {
+  width: min(100%, 480px);
+}
+
 .modal__panel--lg {
   width: min(100%, 960px);
 }
@@ -1158,6 +1162,39 @@ select {
   .modal__body {
     padding-left: 14px;
     padding-right: 14px;
+  }
+}
+
+/* ── Invoice Review Panel ────────────────────────────────────────────────── */
+.uploader-review {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.uploader-review__banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(191, 255, 117, 0.15);
+  border: 1px solid rgba(139, 195, 74, 0.4);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.uploader-review__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+}
+
+@media (max-width: 640px) {
+  .uploader-review__grid {
+    grid-template-columns: 1fr;
   }
 }
 
