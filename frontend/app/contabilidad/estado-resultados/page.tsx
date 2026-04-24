@@ -47,24 +47,29 @@ export default function EstadoResultadosPage() {
     );
   }
 
-  // Lógica de Filtrado por Rango (Inmune a zonas horarias)
+  // Lógica de Filtrado por Rango (Corregida para zonas horarias locales)
   const now = new Date();
+  const nowY = now.getFullYear();
+  const nowM = now.getMonth();
+  const nowD = now.getDate();
+  const todayStart = new Date(nowY, nowM, nowD).getTime();
+
   const filterByRange = (dateStr: string) => {
     if (!dateStr) return false;
+    const d = new Date(dateStr);
     
-    // Extraer YYYY, MM, DD directamente del string (ej: "2026-04-24T...")
-    const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
-    const itemTime = new Date(y, m - 1, d).getTime(); // Medianoche local del item
-    
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayTime = today.getTime();
+    // Extraer componentes locales
+    const itemY = d.getFullYear();
+    const itemM = d.getMonth();
+    const itemD = d.getDate();
+    const itemTime = new Date(itemY, itemM, itemD).getTime();
 
     if (range === 'all') return true;
-    if (range === 'day') return itemTime === todayTime;
-    if (range === 'year') return y === now.getFullYear();
-    if (range === 'month') return y === now.getFullYear() && (m - 1) === now.getMonth();
+    if (range === 'day') return itemY === nowY && itemM === nowM && itemD === nowD;
+    if (range === 'year') return itemY === nowY;
+    if (range === 'month') return itemY === nowY && itemM === nowM;
     if (range === 'week') {
-      const diff = todayTime - itemTime;
+      const diff = todayStart - itemTime;
       const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
       return diff >= 0 && diff <= sevenDaysMs;
     }

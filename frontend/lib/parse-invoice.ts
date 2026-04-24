@@ -148,17 +148,19 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   issuer = cleanup(issuer);
   receiver = cleanup(receiver);
 
-  let parsedDate = new Date().toISOString().slice(0, 16); // YYYY-MM-DDThh:mm
+  const now = new Date();
+  const offset = now.getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(now.getTime() - offset)).toISOString().slice(0, 16);
+  let parsedDate = localISOTime; 
+
   if (dateMatch) {
-    // Si viene como 2026-04-13T14:41:56, quitamos los segundos para datetime-local
     let d = dateMatch[1].trim();
     if (d.includes('T') && d.length > 16) d = d.substring(0, 16);
     else if (d.match(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)) {
-       // DD/MM/YYYY
        const parts = d.split(' ')[0].split('/');
        d = `${parts[2]}-${parts[1]}-${parts[0]}T12:00`;
     }
-    else if (d.length === 10) d = `${d}T12:00`; // YYYY-MM-DD -> YYYY-MM-DDThh:mm
+    else if (d.length === 10) d = `${d}T12:00`;
     parsedDate = d;
   }
   
