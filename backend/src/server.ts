@@ -210,10 +210,11 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
       return response.status(400).json({ error: 'No se subió ningún archivo' });
     }
 
-    const { default: pdfParse } = await import('pdf-parse');
-    let pdfFunc: any = pdfParse;
+    const pdfImport: any = await import('pdf-parse');
+    const pdfFunc = pdfImport.default || pdfImport;
+    
     if (typeof pdfFunc !== 'function') {
-      pdfFunc = (pdfParse as any).default || pdfParse;
+      throw new Error(`pdf-parse no cargó una función válida tras import dinámico.`);
     }
 
     const data = await pdfFunc(request.file.buffer);
