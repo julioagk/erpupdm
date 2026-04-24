@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
+import { useBalance } from '@/context/balance-context';
 import { money, type BankMovement } from '@/lib/data';
 import { fetchFromApi } from '@/lib/api';
 
 export default function BancoPage() {
   const [movements, setMovements] = useState<BankMovement[]>([]);
-  const [balance, setBalance] = useState(0);
+  const { bankBalance: balance } = useBalance();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,7 +16,6 @@ export default function BancoPage() {
       try {
         const data = await fetchFromApi('/api/bank');
         setMovements(data.items || []);
-        setBalance(data.balance || 0);
       } catch (error) {
         console.error('Error cargando banco:', error);
       } finally {

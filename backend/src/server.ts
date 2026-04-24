@@ -184,6 +184,26 @@ app.get('/api/bank', async (_request, response) => {
   response.json({ items, balance: settings?.bankBalance ?? 0 });
 });
 
+app.post('/api/bank/balance', async (request, response) => {
+  try {
+    const { balance } = request.body;
+    if (typeof balance !== 'number') {
+      return response.status(400).json({ error: 'Saldo inválido' });
+    }
+
+    const updated = await prisma.globalSettings.upsert({
+      where: { id: 'global' },
+      update: { bankBalance: balance },
+      create: { id: 'global', bankBalance: balance }
+    });
+
+    response.json({ ok: true, balance: updated.bankBalance });
+  } catch (error) {
+    console.error('Error al actualizar saldo:', error);
+    response.status(500).json({ error: 'Error al actualizar saldo' });
+  }
+});
+
 app.post('/api/extract-pdf', upload.single('file'), async (request, response) => {
   try {
     if (!request.file) {

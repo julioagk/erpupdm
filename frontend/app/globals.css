@@ -350,7 +350,7 @@ select {
   width: 100%;
   border: 1.5px solid var(--primary);
   border-radius: 8px;
-  padding: 4px 8px;
+  padding: 6px 8px;
   font-size: 0.95rem;
   font-weight: 700;
   font-family: var(--font-display), sans-serif;
@@ -358,6 +358,54 @@ select {
   background: #fff;
   color: var(--text);
   outline: none;
+}
+
+.shell__balanceEditGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.shell__balanceActions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.shell__balanceSave,
+.shell__balanceCancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 150ms ease;
+}
+
+.shell__balanceSave {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary-strong);
+}
+
+.shell__balanceSave:hover {
+  background: var(--primary-strong);
+  transform: translateY(-1px);
+}
+
+.shell__balanceCancel {
+  background: #fff;
+  color: var(--muted);
+}
+
+.shell__balanceCancel:hover {
+  background: #fdf2f2;
+  color: #c0392b;
+  border-color: #f5c6cb;
+  transform: translateY(-1px);
 }
 
 .shell__footerNav {

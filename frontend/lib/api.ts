@@ -44,3 +44,10 @@ export async function parseInvoice(text: string) {
     body: JSON.stringify({ text }),
   });
 }
+
+export async function updateBankBalance(balance: number) {
+  return fetchFromApi('/api/bank/balance', {
+    method: 'POST',
+    body: JSON.stringify({ balance }),
+  });
+}

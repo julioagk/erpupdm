@@ -136,16 +136,21 @@ export function WorkspaceShell({
           <div className="shell__balanceWidget">
             <p className="shell__balanceLabel">Saldo Banorte</p>
             {editing ? (
-              <input
-                ref={inputRef}
-                className="shell__balanceInput"
-                type="number"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onBlur={commitEdit}
-                onKeyDown={handleKey}
-                placeholder="0"
-              />
+              <div className="shell__balanceEditGroup">
+                <input
+                  ref={inputRef}
+                  className="shell__balanceInput"
+                  type="number"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKey}
+                  placeholder="0"
+                />
+                <div className="shell__balanceActions">
+                  <button className="shell__balanceSave" onClick={commitEdit} title="Guardar">✓</button>
+                  <button className="shell__balanceCancel" onClick={() => setEditing(false)} title="Cancelar">✕</button>
+                </div>
+              </div>
             ) : (
               <button
                 className="shell__balanceBtn"
