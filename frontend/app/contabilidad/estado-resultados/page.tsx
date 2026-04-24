@@ -213,14 +213,6 @@ export default function EstadoResultadosPage() {
             })}
             
             <tr style={{ fontWeight: 'bold', borderTop: '1px solid black' }}>
-              <td style={{ paddingLeft: '20px', padding: '5px 0' }}>TOTAL DE GASTOS DE VENTA</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-            </tr>
-
-            <tr style={{ fontWeight: 'bold', borderTop: '1px solid black' }}>
               <td style={{ paddingLeft: '20px', padding: '10px 0' }}>TOTAL DE GASTOS DE VENTAS Y ADMINISTRACION</td>
               <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
               <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
