@@ -84,7 +84,7 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
   console.log('[PARSE] Texto recibido (primeros 500 chars):', normalizedText.slice(0, 500));
   
-  const folioPattern = /\b(?:factura|folio|serie\s*folio|ticket|comprobante|n[úu]mero|invoice)[\s:=#-]*([A-Z0-9-]{4,25})\b/i;
+  const folioPattern = /\b(?:factura|folio|serie\s*(?:y\s*)?folio|ticket|comprobante|n[úu]mero|invoice)[\s:=#-]*([A-Z0-9-]{4,25})\b/i;
   const issuerPattern = /\b(?:emisor|nombre|raz[oó]n\s*social(?:\s*del\s*emisor)?|vendedor)[\s:=#-]*([^\r\n]{3,100})/i;
   const receiverPattern = /\b(?:receptor|cliente|raz[oó]n\s*social(?:\s*del\s*receptor)?|facturado\s*a)[\s:=#-]*([^\r\n]{3,100})/i;
   
@@ -132,7 +132,7 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   }
 
   // Fallback para Folio: Buscar UUID o códigos alfanuméricos largos
-  if (!folio || folio === 'SIN-FOLIO' || /mbre|fiscal|digital|fecha/i.test(folio)) {
+  if (!folio || folio === 'SIN-FOLIO' || /mbre|fiscal|digital|fecha|ingreso/i.test(folio)) {
     const specificFolioMatch = normalizedText.match(/\bFOLIO[\s:=#-]*\n?\s*([A-Z0-9]{4,25})\b/i);
     if (specificFolioMatch) {
       folio = specificFolioMatch[1].trim();
@@ -143,7 +143,7 @@ export function parseInvoiceText(text: string): ParsedInvoice {
       } else {
         // Buscar cualquier código alfanumérico largo que no sea una palabra común
         const codeMatch = normalizedText.match(/\b([A-Z0-9]{8,15})\b/);
-        if (codeMatch && !/TOTAL|SUBTOTAL|EMISOR|RFC|IVA/.test(codeMatch[1])) {
+        if (codeMatch && !/TOTAL|SUBTOTAL|EMISOR|RFC|IVA|INGRESO/.test(codeMatch[1])) {
           folio = codeMatch[1];
         } else {
           folio = 'SIN-FOLIO';
