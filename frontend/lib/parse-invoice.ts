@@ -100,6 +100,9 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   const ivaMatch = normalizedText.match(ivaPattern);
   const dateMatch = normalizedText.match(datePattern);
   const paymentMatch = normalizedText.match(paymentMethodPattern);
+  const folioMatch = normalizedText.match(folioPattern);
+  const issuerMatch = normalizedText.match(issuerPattern);
+  const receiverMatch = normalizedText.match(receiverPattern);
   
   const total = totalMatch ? normalizeNumber(totalMatch[1]) : 0;
   const subtotal = subtotalMatch ? normalizeNumber(subtotalMatch[1]) : 0;
