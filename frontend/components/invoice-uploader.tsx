@@ -234,7 +234,7 @@ export function InvoiceUploader({
                   <input className="form__input" value={fields.receiver} onChange={e => setField('receiver', e.target.value)} />
                 </label>
                 <label className="form__row">
-                  <span className="form__label">Folio / UUID</span>
+                  <span className="form__label">Folio / No. Factura</span>
                   <input className="form__input" value={fields.folio} onChange={e => setField('folio', e.target.value)} />
                 </label>
                 <label className="form__row">
