@@ -108,8 +108,8 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   const subtotal = subtotalMatch ? normalizeNumber(subtotalMatch[1]) : 0;
   const iva = ivaMatch ? normalizeNumber(ivaMatch[1]) : 0;
 
-  let issuer = issuerMatch?.[2]?.trim() || '';
-  let receiver = receiverMatch?.[2]?.trim() || '';
+  let issuer = issuerMatch ? issuerMatch[1].trim() : '';
+  let receiver = receiverMatch ? receiverMatch[1].trim() : '';
   let folio = folioMatch ? folioMatch[1].trim() : '';
 
   // Fallback para Emisor: Buscar antes de un RFC o la primera línea significativa
@@ -136,8 +136,17 @@ export function parseInvoiceText(text: string): ParsedInvoice {
     }
   }
 
-  // Limpieza final de issuer para quitar ruidos comunes
-  issuer = issuer.replace(/(?:RFC|TEL|DOMICILIO|PAGINA|WWW|EMAIL|FOLIO|EMISOR|RECEPTOR).*/i, '').trim();
+  // Limpieza final para quitar ruidos comunes
+  const cleanup = (text: string) => {
+    if (!text) return '';
+    return text
+      .replace(/^(?:NOMBRE|EMISOR|RECEPTOR|CLIENTE|PROVEEDOR|RAZON\s*SOCIAL)[\s:#-]*/i, '') // Quitar prefijos al inicio
+      .replace(/(?:RFC|TEL|DOMICILIO|PAGINA|WWW|EMAIL|FOLIO|EMISOR|RECEPTOR).*/i, '') // Quitar ruidos que vienen después
+      .trim();
+  };
+
+  issuer = cleanup(issuer);
+  receiver = cleanup(receiver);
 
   let parsedDate = new Date().toISOString().slice(0, 16); // YYYY-MM-DDThh:mm
   if (dateMatch) {
