@@ -12,6 +12,7 @@ export default function SalesListPage() {
   const [sales, setSales] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState<SalesInvoice | null>(null);
 
   useEffect(() => {
     async function loadSales() {
@@ -48,7 +49,25 @@ export default function SalesListPage() {
   }
 
   function handleEdit(item: SalesInvoice) {
-    alert('Función de edición en construcción. Próximamente podrás editar ' + item.invoiceNumber);
+    setEditingRow({ ...item });
+  }
+
+  async function handleSaveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingRow) return;
+    try {
+      const updated = await fetchFromApi(`/api/invoices/${editingRow.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          ...editingRow,
+          type: 'SALE'
+        })
+      });
+      setSales(prev => prev.map(i => i.id === updated.id ? updated : i));
+      setEditingRow(null);
+    } catch (error) {
+      alert('Error al guardar los cambios');
+    }
   }
 
   async function handleConfirmNew(parsed: any) {
@@ -70,7 +89,7 @@ export default function SalesListPage() {
       setSales(prev => [newInvoice, ...prev]);
       setAddModalOpen(false);
     } catch (error) {
-      alert('Error al guardar la venta en el servidor');
+      alert('Error al guardar la venta en la base de datos');
     }
   }
 
@@ -137,6 +156,55 @@ export default function SalesListPage() {
           isSale={true}
           onParsed={handleConfirmNew}
         />
+      </Modal>
+
+      <Modal
+        isOpen={!!editingRow}
+        onClose={() => setEditingRow(null)}
+        title="Editar Venta"
+        description="Modifica los datos de la factura."
+        size="md"
+      >
+        {editingRow && (
+          <form className="stack" onSubmit={handleSaveEdit} style={{ marginTop: '20px' }}>
+            <label className="form__row">
+              <span className="form__label">Cliente</span>
+              <input required className="form__input" value={editingRow.customer || ''} onChange={e => setEditingRow({...editingRow, customer: e.target.value})} />
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <label className="form__row">
+                <span className="form__label">Folio</span>
+                <input required className="form__input" value={editingRow.invoiceNumber || ''} onChange={e => setEditingRow({...editingRow, invoiceNumber: e.target.value})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">Fecha</span>
+                <input required className="form__input" type="datetime-local" value={editingRow.date} onChange={e => setEditingRow({...editingRow, date: e.target.value})} />
+              </label>
+            </div>
+            <label className="form__row">
+              <span className="form__label">Método de Pago</span>
+              <input className="form__input" value={editingRow.paymentMethod || ''} onChange={e => setEditingRow({...editingRow, paymentMethod: e.target.value})} />
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <label className="form__row">
+                <span className="form__label">Subtotal</span>
+                <input required type="number" step="0.01" className="form__input" value={editingRow.subtotal || 0} onChange={e => setEditingRow({...editingRow, subtotal: parseFloat(e.target.value)})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">IVA</span>
+                <input required type="number" step="0.01" className="form__input" value={editingRow.iva || 0} onChange={e => setEditingRow({...editingRow, iva: parseFloat(e.target.value)})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">Total</span>
+                <input required type="number" step="0.01" className="form__input" value={editingRow.amount || 0} onChange={e => setEditingRow({...editingRow, amount: parseFloat(e.target.value)})} />
+              </label>
+            </div>
+            <div className="form__actions" style={{ marginTop: '20px', display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
+              <button type="button" className="button button--secondary" onClick={() => setEditingRow(null)}>Cancelar</button>
+              <button type="submit" className="button button--primary">Guardar Cambios</button>
+            </div>
+          </form>
+        )}
       </Modal>
     </WorkspaceShell>
   );
