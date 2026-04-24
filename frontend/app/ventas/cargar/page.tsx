@@ -1,54 +1,65 @@
+'use client';
+
 import { WorkspaceShell } from '@/components/workspace-shell';
 import { InvoiceUploader } from '@/components/invoice-uploader';
+import { useRouter } from 'next/navigation';
+import { fetchFromApi } from '@/lib/api';
 
 export default function CargarVentasPage() {
+  const router = useRouter();
+
+  async function handleParsed(parsed: any) {
+    try {
+      await fetchFromApi('/api/invoices', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...parsed,
+          type: 'SALE',
+          customer: parsed.receiver,
+          invoiceNumber: parsed.folio,
+          amount: parsed.total,
+          category: 'Ventas',
+          source: 'Carga Directa'
+        })
+      });
+      router.push('/ventas/listado');
+    } catch (error) {
+      alert('Error al guardar la venta');
+    }
+  }
+
   return (
     <WorkspaceShell
       active="/ventas/cargar"
       eyebrow="Cargar facturas de venta"
       title="Registro de nuevas facturas de venta"
-      subtitle="Carga facturas ya emitidas para registrar clientes, folios y totales automaticamente."
+      subtitle="Carga facturas ya emitidas para registrar clientes, folios y totales automáticamente."
     >
       <section className="split">
         <InvoiceUploader
           title="Cargar factura de venta"
-          description="Sube una factura de venta ya emitida para registrar cliente, folio, fecha y total."
+          description="Sube una factura de venta ya emitida o pega el contenido para registrar cliente, folio y total."
           actionLabel="Venta"
           accent="rgba(31, 122, 79, 0.16)"
-          fieldLabel="Contenido de la factura"
-          fieldPlaceholder="Pega el contenido de la factura emitida o el texto extraido del documento"
-          uploadHint="Sube la factura emitida o pega su contenido para registrar cliente, folio, fecha y total."
-          fileNote="Factura cargada correctamente."
-          unsupportedFileNote="Si es imagen o PDF, conecta su lectura automatica en backend."
-          parseButtonLabel="Registrar factura"
-          clearButtonLabel="Limpiar contenido"
-          parsedLabel="Factura de venta registrada correctamente."
           showCategorySelector={false}
+          onParsed={handleParsed}
         />
 
         <div className="card">
           <div className="card__header">
             <div>
-              <h3 className="card__title">Opciones de carga</h3>
-              <p className="card__label">Elige como deseas procesar la factura.</p>
+              <h3 className="card__title">Instrucciones</h3>
+              <p className="card__label">Elige cómo deseas procesar la factura.</p>
             </div>
           </div>
           <div className="card__body stack">
-            <div style={{ display: 'grid', gap: '12px' }}>
-              <label className="form__row">
-                <input type="radio" name="loadType" value="manual" defaultChecked />
-                <span className="form__label" style={{ marginLeft: '8px' }}>Pegar contenido manualmente</span>
-              </label>
-              <label className="form__row">
-                <input type="radio" name="loadType" value="file" />
-                <span className="form__label" style={{ marginLeft: '8px' }}>Subir archivo (TXT, PDF)</span>
-              </label>
-              <label className="form__row">
-                <input type="radio" name="loadType" value="ocr" />
-                <span className="form__label" style={{ marginLeft: '8px' }}>Escanear con camara (OCR)</span>
-              </label>
-            </div>
-            <p className="footer-note">El motor OCR esta disponible en backend cuando conectes la integracion de lectura de imagenes.</p>
+            <p>El sistema ahora es automático:</p>
+            <ul style={{ paddingLeft: '20px', fontSize: '0.9rem', color: '#666' }}>
+              <li>Arrastra el XML directamente al recuadro.</li>
+              <li>O pega el texto y el sistema detectará el folio.</li>
+              <li>Al confirmar, la venta se guardará en Railway.</li>
+            </ul>
+            <p className="footer-note">Soporte para CFDI 4.0 habilitado.</p>
           </div>
         </div>
       </section>
