@@ -53,6 +53,7 @@ app.get('/api/dashboard', async (_request, response) => {
 app.get('/api/accounting', async (request, response) => {
   try {
     const range = String(request.query.range || 'month');
+    const settings = await prisma.globalSettings.findUnique({ where: { id: 'global' } });
     
     const selectFields = { id: true, date: true, amount: true, subtotal: true, iva: true, category: true, source: true, invoiceNumber: true, description: true, type: true, providerId: true, providerName: true, customerName: true, paymentMethod: true, status: true, createdAt: true };
     const sales = await prisma.invoice.findMany({ where: { type: 'SALE' }, select: selectFields });
@@ -63,8 +64,12 @@ app.get('/api/accounting', async (request, response) => {
     const net = salesTotal - expenseTotal;
     const margin = salesTotal === 0 ? 0 : (net / salesTotal) * 100;
 
+    const mappedSales = sales.map(s => ({ ...s, customer: s.customerName }));
+    const mappedExpenses = expenses.map(e => ({ ...e, provider: e.providerName }));
+
     response.json({
       range,
+      bankBalance: settings?.bankBalance || 0,
       summary: {
         salesTotal,
         expenseTotal,
@@ -73,11 +78,12 @@ app.get('/api/accounting', async (request, response) => {
         salesCount: sales.length,
         expenseCount: expenses.length
       },
-      // Mapeamos para que el frontend reciba "customer" y "provider" como espera
-      sales: sales.map(s => ({ ...s, customer: s.customerName })),
-      expenses: expenses.map(e => ({ ...e, provider: e.providerName }))
+      sales: mappedSales,
+      expenses: mappedExpenses,
+      items: [...mappedSales, ...mappedExpenses]
     });
   } catch (error) {
+    console.error(error);
     response.status(500).json({ error: 'Error en contabilidad' });
   }
 });

@@ -206,6 +206,39 @@ export default function EstadoResultadosPage() {
               <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos - totalAcumuladoEgresos)}</td>
               <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoIngresos - totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
             </tr>
+
+            <tr style={{ height: '50px' }}></tr>
+            
+            {/* Sección Solicitada: (BANCOS) + (VENTAS) - (COMPRAS) */}
+            <tr><td colSpan={5} style={{ padding: '10px 0', fontWeight: 'bold', borderTop: '1px solid black', fontSize: '13px' }}>CONCILIACIÓN DE LIQUIDEZ (BANCOS)</td></tr>
+            <tr>
+              <td style={{ paddingLeft: '10px' }}>Saldo Inicial en Bancos (Ajustado)</td>
+              <td style={{ textAlign: 'right' }}>{fmt(data.bankBalance - (totalPeriodoIngresos - totalPeriodoEgresos))}</td>
+              <td></td>
+              <td style={{ textAlign: 'right' }}>{fmt(data.bankBalance - (totalAcumuladoIngresos - totalAcumuladoEgresos))}</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td style={{ paddingLeft: '10px' }}>(+) Ventas del Periodo</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
+              <td></td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td style={{ paddingLeft: '10px' }}>(-) Compras y Gastos</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
+              <td></td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
+              <td></td>
+            </tr>
+            <tr style={{ fontWeight: 'bold', borderTop: '1px solid black', backgroundColor: '#f0f4f8' }}>
+              <td style={{ paddingLeft: '10px', padding: '10px 0' }}>Saldo Final Actual (Bancos)</td>
+              <td style={{ textAlign: 'right' }}>{fmt(data.bankBalance)}</td>
+              <td></td>
+              <td style={{ textAlign: 'right' }}>{fmt(data.bankBalance)}</td>
+              <td></td>
+            </tr>
           </tbody>
         </table>
         
