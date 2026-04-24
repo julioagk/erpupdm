@@ -25,8 +25,8 @@ export default function EstadoResultadosPage() {
 
   if (loading) {
     return (
-      <WorkspaceShell active="/contabilidad/estado-resultados" eyebrow="Contabilidad" title="Generando reporte..." subtitle="Calculando estados financieros desde Railway...">
-        <div style={{ padding: '40px', textAlign: 'center' }}>Procesando cifras reales...</div>
+      <WorkspaceShell active="/contabilidad/estado-resultados" eyebrow="Contabilidad" title="Generando reporte..." subtitle="Calculando estados financieros reales...">
+        <div style={{ padding: '40px', textAlign: 'center' }}>Procesando cifras reales desde Railway...</div>
       </WorkspaceShell>
     );
   }
@@ -38,97 +38,97 @@ export default function EstadoResultadosPage() {
   return (
     <WorkspaceShell
       active="/contabilidad/estado-resultados"
-      eyebrow="Reportes Financieros"
+      eyebrow="Contabilidad"
       title="Estado de Resultados"
-      subtitle="Resumen detallado de ingresos y egresos del periodo actual sincronizado con PostgreSQL."
+      subtitle="Visión integral de tus finanzas en tiempo real. Todos los datos provienen de tu base de datos PostgreSQL."
     >
-      <section className="stack">
-        <div className="card dashboard__pdfFrame" style={{ maxWidth: '900px', margin: '0 auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
-          <div className="dashboard__pdfPage" id="print-area">
-            <div className="dashboard__pdfHeader">
-              <div>
-                <p className="dashboard__pdfEyebrow">Reporte Ejecutivo</p>
-                <h2 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.03em' }}>Estado de Resultados</h2>
-                <p style={{ color: '#666' }}>Periodo: Mes Actual (Sincronizado con Railway)</p>
-              </div>
-              <div className="dashboard__pdfStamp">
-                <strong>CERTIFICADO</strong>
-                <span>ERP UPDM v1.0</span>
-              </div>
-            </div>
+      <section className="dashboard__grid">
+        {/* Métricas Principales */}
+        <article className="card" style={{ gridColumn: 'span 3' }}>
+          <div className="card__header">
+            <h3 className="card__title">Ventas Totales</h3>
+            <span className="badge badge--success">Ingresos</span>
+          </div>
+          <div className="card__body">
+            <div className="dashboard__bigAmount" style={{ color: '#27ae60' }}>{money(summary.salesTotal)}</div>
+            <p className="card__label">{sales.length} facturas emitidas</p>
+          </div>
+        </article>
 
-            <div className="dashboard__pdfSummary" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', background: '#f8faf8', padding: '30px', borderRadius: '20px', margin: '30px 0' }}>
-              <div>
-                <span className="card__label">Ingresos Totales</span>
-                <strong style={{ fontSize: '1.5rem', display: 'block', color: '#27ae60' }}>{money(summary.salesTotal)}</strong>
-              </div>
-              <div>
-                <span className="card__label">Egresos Totales</span>
-                <strong style={{ fontSize: '1.5rem', display: 'block', color: '#c0392b' }}>{money(summary.expenseTotal)}</strong>
-              </div>
-              <div>
-                <span className="card__label">Utilidad Neta</span>
-                <strong style={{ fontSize: '1.5rem', display: 'block', color: '#2c3e50' }}>{money(summary.net)}</strong>
-              </div>
-              <div>
-                <span className="card__label">Margen Operativo</span>
-                <strong style={{ fontSize: '1.5rem', display: 'block' }}>{summary.margin.toFixed(1)}%</strong>
-              </div>
-            </div>
+        <article className="card" style={{ gridColumn: 'span 3' }}>
+          <div className="card__header">
+            <h3 className="card__title">Gastos Totales</h3>
+            <span className="badge" style={{ backgroundColor: '#fdf2f2', color: '#c0392b' }}>Egresos</span>
+          </div>
+          <div className="card__body">
+            <div className="dashboard__bigAmount" style={{ color: '#c0392b' }}>{money(summary.expenseTotal)}</div>
+            <p className="card__label">{expenses.length} facturas de compra</p>
+          </div>
+        </article>
 
-            <div className="dashboard__pdfSection">
-              <h3 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>Detalle de Ingresos</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ textAlign: 'left', color: '#888', fontSize: '0.8rem', textTransform: 'uppercase' }}>
-                    <th style={{ padding: '12px' }}>Cliente</th>
-                    <th style={{ padding: '12px' }}>Folio</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Monto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sales.map((sale: any) => (
-                    <tr key={sale.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                      <td style={{ padding: '12px' }}>{sale.customer}</td>
-                      <td style={{ padding: '12px', color: '#888' }}>{sale.invoiceNumber}</td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600 }}>{money(sale.amount)}</td>
-                    </tr>
-                  ))}
-                  {sales.length === 0 && <tr><td colSpan={3} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>No hay ventas registradas.</td></tr>}
-                </tbody>
-              </table>
-            </div>
+        <article className="card" style={{ gridColumn: 'span 3' }}>
+          <div className="card__header">
+            <h3 className="card__title">Utilidad Neta</h3>
+            <span className="badge">Resultado</span>
+          </div>
+          <div className="card__body">
+            <div className="dashboard__bigAmount">{money(summary.net)}</div>
+            <p className="card__label">Balance del periodo</p>
+          </div>
+        </article>
 
-            <div className="dashboard__pdfSection" style={{ marginTop: '40px' }}>
-              <h3 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>Detalle de Egresos</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ textAlign: 'left', color: '#888', fontSize: '0.8rem', textTransform: 'uppercase' }}>
-                    <th style={{ padding: '12px' }}>Proveedor</th>
-                    <th style={{ padding: '12px' }}>Categoría</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Monto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.map((exp: any) => (
-                    <tr key={exp.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                      <td style={{ padding: '12px' }}>{exp.provider}</td>
-                      <td style={{ padding: '12px' }}><span className="chip">{exp.category}</span></td>
-                      <td style={{ padding: '12px', textAlign: 'right', fontWeight: 600, color: '#c0392b' }}>{money(exp.amount)}</td>
-                    </tr>
-                  ))}
-                  {expenses.length === 0 && <tr><td colSpan={3} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>No hay gastos registrados.</td></tr>}
-                </tbody>
-              </table>
+        <article className="card" style={{ gridColumn: 'span 3' }}>
+          <div className="card__header">
+            <h3 className="card__title">Margen Bruto</h3>
+            <span className="badge">Eficiencia</span>
+          </div>
+          <div className="card__body">
+            <div className="dashboard__bigAmount">{summary.margin.toFixed(1)}%</div>
+            <p className="card__label">Porcentaje de utilidad</p>
+          </div>
+        </article>
+
+        {/* Tablas Detalladas */}
+        <article className="card" style={{ gridColumn: 'span 6' }}>
+          <div className="card__header">
+            <h3 className="card__title">Detalle de Ventas</h3>
+            <button className="chip" onClick={() => window.print()} style={{ cursor: 'pointer' }}>🖨️ PDF</button>
+          </div>
+          <div className="card__body">
+            <div className="list">
+              {sales.map((sale: any) => (
+                <div key={sale.id} className="list__item">
+                  <div className="list__meta">
+                    <strong>{sale.customer}</strong>
+                    <span>{sale.date} — Folio: {sale.invoiceNumber}</span>
+                  </div>
+                  <div className="list__amount" style={{ color: '#27ae60' }}>+{money(sale.amount)}</div>
+                </div>
+              ))}
+              {sales.length === 0 && <p className="footer-note">No hay ventas registradas en este periodo.</p>}
             </div>
           </div>
-        </div>
+        </article>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
-          <button className="button button--primary" onClick={() => window.print()}>
-            🖨️ Descargar Reporte PDF
-          </button>
-        </div>
+        <article className="card" style={{ gridColumn: 'span 6' }}>
+          <div className="card__header">
+            <h3 className="card__title">Detalle de Gastos</h3>
+          </div>
+          <div className="card__body">
+            <div className="list">
+              {expenses.map((exp: any) => (
+                <div key={exp.id} className="list__item">
+                  <div className="list__meta">
+                    <strong>{exp.provider}</strong>
+                    <span>{exp.category} — {exp.date}</span>
+                  </div>
+                  <div className="list__amount" style={{ color: '#c0392b' }}>-{money(exp.amount)}</div>
+                </div>
+              ))}
+              {expenses.length === 0 && <p className="footer-note">No hay gastos registrados en este periodo.</p>}
+            </div>
+          </div>
+        </article>
       </section>
     </WorkspaceShell>
   );
