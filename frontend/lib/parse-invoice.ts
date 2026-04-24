@@ -65,20 +65,40 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
   const folioPattern = /(?:factura|invoice|folio|no\.?|numero|n[úu]m(?:ero)?)[\s:#-]*([A-Z0-9\s-]+)/i;
   const issuerPattern = /(emisor|proveedor|razon social emisor|razon social:|nombre emisor|nombre del emisor)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
-  const totalPattern = /(total|importe total)[\s:#-]*\$?([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?|[0-9]+(?:[.,][0-9]{2})?)/i;
+  const receiverPattern = /(receptor|cliente|razon social receptor|nombre receptor|nombre del receptor|facturado a)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
+  
+  const amountRegex = /(?:\$|MXN\s?)?\s?([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?|[0-9]+(?:[.,][0-9]{2})?)/;
+  
+  const totalPattern = new RegExp(`(?:total|importe total)[\\s:#-]*${amountRegex.source}`, 'i');
+  const subtotalPattern = new RegExp(`(?:subtotal|sub-total)[\\s:#-]*${amountRegex.source}`, 'i');
+  const ivaPattern = new RegExp(`(?:iva|impuesto al valor agregado|traslados)[\\s:#-]*${amountRegex.source}`, 'i');
 
   const totalMatch = normalizedText.match(totalPattern);
-  const total = totalMatch ? normalizeNumber(totalMatch[2]) : 0;
+  const subtotalMatch = normalizedText.match(subtotalPattern);
+  const ivaMatch = normalizedText.match(ivaPattern);
+  
+  const total = totalMatch ? normalizeNumber(totalMatch[1]) : 0;
+  let subtotal = subtotalMatch ? normalizeNumber(subtotalMatch[1]) : 0;
+  let iva = ivaMatch ? normalizeNumber(ivaMatch[1]) : 0;
+
+  // Si no se encontró subtotal o IVA pero sí total, calcular el 16% por defecto
+  if (total > 0 && subtotal === 0 && iva === 0) {
+    subtotal = Number((total / 1.16).toFixed(2));
+    iva = Number((total - subtotal).toFixed(2));
+  }
+
   const folioMatch = normalizedText.match(folioPattern);
+  const issuerMatch = normalizedText.match(issuerPattern);
+  const receiverMatch = normalizedText.match(receiverPattern);
   
   return {
-    issuer: normalizedText.match(issuerPattern)?.[2]?.trim() || 'Emisor no identificado',
-    receiver: 'Receptor no identificado',
+    issuer: issuerMatch?.[2]?.trim() || 'Emisor no identificado',
+    receiver: receiverMatch?.[2]?.trim() || 'Receptor no identificado',
     folio: folioMatch ? folioMatch[1].trim() : 'SIN-FOLIO',
     date: new Date().toISOString().slice(0, 10),
     total: total,
-    subtotal: total / 1.16,
-    iva: total - (total / 1.16),
+    subtotal: subtotal,
+    iva: iva,
     paymentMethod: 'PUE - Pago en una sola exhibición',
     expenseType: 'Gastos de Administración'
   };
