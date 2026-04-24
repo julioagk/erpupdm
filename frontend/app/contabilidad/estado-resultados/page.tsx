@@ -204,6 +204,14 @@ export default function EstadoResultadosPage() {
                 </tr>
               );
             })}
+            
+            <tr style={{ fontWeight: 'bold', borderTop: '1px solid black' }}>
+              <td style={{ paddingLeft: '20px', padding: '10px 0' }}>TOTAL DE GASTOS DE VENTAS Y ADMINISTRACION</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
+            </tr>
 
             {/* Secciones Adicionales */}
             <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', paddingTop: '15px' }}>COSTO INTEGRAL DE FINANCIAMIENTO</td></tr>
@@ -211,17 +219,17 @@ export default function EstadoResultadosPage() {
             <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', paddingTop: '10px' }}>ISR Y PTU</td></tr>
 
             <tr style={{ fontWeight: 'bold', borderTop: '2px solid black', backgroundColor: '#f5f5f5' }}>
-              <td style={{ fontStyle: 'italic', padding: '15px 10px' }}>Total Egresos</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
-              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
-              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
+              <td style={{ fontStyle: 'italic', padding: '15px 10px' }}>Total Egresos (Ingresos - Gastos)</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos - totalPeriodoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoIngresos - totalPeriodoEgresos, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos - totalAcumuladoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoIngresos - totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
             </tr>
 
             <tr style={{ height: '50px' }}></tr>
 
             <tr style={{ fontWeight: 'bold', borderTop: '3px double black', fontSize: '16px', backgroundColor: '#fff' }}>
-              <td style={{ fontStyle: 'italic', padding: '20px 10px' }}>Utilidad (o Pérdida)</td>
+              <td style={{ fontStyle: 'italic', padding: '20px 10px' }}>Utilidad (o Pérdida) Final</td>
               <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos - totalPeriodoEgresos)}</td>
               <td style={{ textAlign: 'right' }}>{pct(totalPeriodoIngresos - totalPeriodoEgresos, totalPeriodoIngresos)}</td>
               <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos - totalAcumuladoEgresos)}</td>
