@@ -77,7 +77,10 @@ export function InvoiceUploader({
           body: formData
         });
         
-        if (!response.ok) throw new Error('Error en servidor al leer PDF');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.details || errorData.error || 'Error en servidor al leer PDF');
+        }
         
         const data = await response.json();
         content = data.text;
@@ -96,7 +99,8 @@ export function InvoiceUploader({
       setMessage('✅ Lectura completada. Revisa los datos.');
     } catch (error) {
       console.error(error);
-      setMessage('❌ No pudimos leer el archivo. Prueba pegando el texto manualmente.');
+      const errMsg = error instanceof Error ? error.message : 'Error desconocido';
+      setMessage(`❌ ${errMsg}. Prueba pegando el texto manualmente.`);
     } finally {
       setIsProcessing(false);
     }

@@ -188,8 +188,11 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
     const data = await (pdf as any)(request.file.buffer);
     response.json({ text: data.text });
   } catch (error) {
-    console.error(error);
-    response.status(500).json({ error: 'Error al procesar el PDF' });
+    console.error('Error procesando PDF:', error);
+    response.status(500).json({ 
+      error: 'Error al procesar el PDF', 
+      details: error instanceof Error ? error.message : String(error) 
+    });
   }
 });
 
