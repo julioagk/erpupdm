@@ -11,6 +11,10 @@ export default function EstadoResultadosPage() {
   const [range, setRange] = useState<(typeof ranges)[number]>('month');
   const [showBreakdown, setShowBreakdown] = useState(false);
 
+  function handlePrint() {
+    window.print();
+  }
+
   const report = useMemo(() => buildUpdmReport(range), [range]);
   const insight = useMemo(() => buildAIInsight(range), [range]);
 
@@ -56,23 +60,37 @@ export default function EstadoResultadosPage() {
         </div>
 
         {/* ── Tabla UPDM ────────────────────────────────────────────────── */}
-        <div className="card">
+        <div className="card card--print" id="updm-report">
+          <div className="print-header" style={{ display: "none" }}>
+            <h1>UPDM S.A DE C.V — Estado de Resultados</h1>
+            <p>Periodo: {rangeLabels[range]}</p>
+          </div>
           <div className="card__header">
             <div>
               <h3 className="card__title">UPDM S.A DE C.V</h3>
               <p className="card__label">Reporte del periodo seleccionado vs Acumulado histórico.</p>
             </div>
-            <div className="chip-row">
-              {ranges.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={`chip ${range === item ? 'chip--active' : ''}`}
-                  onClick={() => setRange(item)}
-                >
-                  {rangeLabels[item]}
-                </button>
-              ))}
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="chip-row">
+                {ranges.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className={`chip ${range === item ? 'chip--active' : ''}`}
+                    onClick={() => setRange(item)}
+                  >
+                    {rangeLabels[item]}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={handlePrint}
+                style={{ fontSize: '0.82rem', padding: '6px 14px' }}
+              >
+                ⬇ Descargar PDF
+              </button>
             </div>
           </div>
 
@@ -172,7 +190,7 @@ export default function EstadoResultadosPage() {
         </div>
 
         {/* ── Desglose individual ───────────────────────────────────────── */}
-        <div className="card">
+        <div className="card card--print">
           <div className="card__header">
             <div>
               <h3 className="card__title">Desglose individual</h3>

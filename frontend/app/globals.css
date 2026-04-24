@@ -1160,3 +1160,83 @@ select {
     padding-right: 14px;
   }
 }
+
+/* ── Print / PDF ─────────────────────────────────────────────────────────── */
+@media print {
+  /* Ocultar toda la interfaz */
+  .shell__sidebar,
+  .page__eyebrow,
+  .page__subtitle,
+  .chip-row,
+  button,
+  .page__hero {
+    display: none !important;
+  }
+
+  /* Ocultar todas las cards excepto la tabla UPDM */
+  .card {
+    display: none !important;
+  }
+
+  #updm-report {
+    display: block !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  html, body {
+    font-size: 10px;
+    background: #fff;
+    color: #000;
+  }
+
+  .shell {
+    display: block !important;
+  }
+
+  .shell__main {
+    width: 100% !important;
+    padding: 12px !important;
+  }
+
+  .page {
+    padding: 0 !important;
+  }
+
+  .table--updm th,
+  .table--updm td {
+    font-size: 9px;
+    padding: 4px 6px;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .table--updm thead th {
+    background: #f0f0f0;
+    font-weight: 700;
+  }
+
+  /* Encabezado del reporte — visible solo al imprimir */
+  .print-header {
+    display: block !important;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #000;
+  }
+
+  .print-header h1 {
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+  }
+
+  .print-header p {
+    font-size: 0.85rem;
+    color: #555;
+    margin: 0;
+  }
+
+  /* Ocultar los botones de filtro dentro de la card impresa */
+  #updm-report .card__header div[style] {
+    display: none !important;
+  }
+}
