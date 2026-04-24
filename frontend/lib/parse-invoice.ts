@@ -79,14 +79,8 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   const ivaMatch = normalizedText.match(ivaPattern);
   
   const total = totalMatch ? normalizeNumber(totalMatch[1]) : 0;
-  let subtotal = subtotalMatch ? normalizeNumber(subtotalMatch[1]) : 0;
-  let iva = ivaMatch ? normalizeNumber(ivaMatch[1]) : 0;
-
-  // Si no se encontró subtotal o IVA pero sí total, calcular el 16% por defecto
-  if (total > 0 && subtotal === 0 && iva === 0) {
-    subtotal = Number((total / 1.16).toFixed(2));
-    iva = Number((total - subtotal).toFixed(2));
-  }
+  const subtotal = subtotalMatch ? normalizeNumber(subtotalMatch[1]) : 0;
+  const iva = ivaMatch ? normalizeNumber(ivaMatch[1]) : 0;
 
   const folioMatch = normalizedText.match(folioPattern);
   const issuerMatch = normalizedText.match(issuerPattern);
