@@ -180,7 +180,7 @@ export default function EstadoResultadosPage() {
 
             <tr><td colSpan={5} style={{ padding: '25px 0 5px 0', fontWeight: 'bold', fontStyle: 'italic', fontSize: '14px' }}>Egresos</td></tr>
             
-            {/* Costo de Ventas Placeholder */}
+            {/* Costo de Ventas */}
             <tr style={{ fontWeight: 'bold' }}>
               <td style={{ paddingLeft: '10px' }}>COSTO DE VENTAS</td>
               <td style={{ textAlign: 'right' }}>-</td>
@@ -188,9 +188,16 @@ export default function EstadoResultadosPage() {
               <td style={{ textAlign: 'right' }}>-</td>
               <td style={{ textAlign: 'right' }}>0.00</td>
             </tr>
+            <tr style={{ fontWeight: 'bold', borderTop: '1px solid #ddd' }}>
+              <td style={{ paddingLeft: '20px' }}>TOTAL COSTO DE VENTAS</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
 
-            {/* Gastos de Administración (Todos, incluso ceros) */}
-            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', paddingTop: '15px' }}>GASTOS DE VENTA Y ADMINISTRACION</td></tr>
+            {/* Gastos de Venta y Administración */}
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', paddingTop: '20px' }}>GASTOS DE VENTA Y ADMINISTRACION</td></tr>
             {expenseCategories.map(cat => {
               const perTotal = getCategoryTotal(periodoExpenses, cat);
               const acuTotal = getCategoryTotal(acumuladoExpenses, cat);
@@ -205,6 +212,14 @@ export default function EstadoResultadosPage() {
               );
             })}
             
+            <tr style={{ fontWeight: 'bold', borderTop: '1px solid black' }}>
+              <td style={{ paddingLeft: '20px', padding: '5px 0' }}>TOTAL DE GASTOS DE VENTA</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
+
             <tr style={{ fontWeight: 'bold', borderTop: '1px solid black' }}>
               <td style={{ paddingLeft: '20px', padding: '10px 0' }}>TOTAL DE GASTOS DE VENTAS Y ADMINISTRACION</td>
               <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
