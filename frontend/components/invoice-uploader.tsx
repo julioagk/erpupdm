@@ -221,9 +221,9 @@ export function InvoiceUploader({
         )}
 
         {fields && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-            {/* 1. Formulario arriba (ancho completo) */}
-            <div className="uploader-review" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '30px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+            {/* 1. Formulario a la izquierda */}
+            <div className="uploader-review" style={{ flex: '1 1 350px' }}>
                <div className="uploader-review__grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <label className="form__row">
                   <span className="form__label">Emisor (Proveedor)</span>
@@ -279,9 +279,9 @@ export function InvoiceUploader({
               </div>
             </div>
 
-            {/* 2. PDF Abajo (Alto y Ancho completo) */}
+            {/* 2. PDF a la derecha (Con más espacio visual) */}
             {fields.pdfData && (
-              <div style={{ width: '100%', height: '75vh', minHeight: '600px', border: '1px solid #ddd', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ flex: '1.5 1 500px', height: '650px', border: '1px solid #ddd', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ padding: '10px 15px', background: '#f5f5f5', borderBottom: '1px solid #ddd', fontWeight: 600, fontSize: '0.9rem', color: '#555' }}>
                   📄 Vista previa del documento original
                 </div>
