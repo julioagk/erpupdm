@@ -3,7 +3,8 @@ import express from 'express';
 import prisma from './db.js';
 import { parseInvoiceText } from './parse-invoice.js';
 import multer from 'multer';
-import pdf from 'pdf-parse';
+// @ts-ignore
+const pdf = require('pdf-parse');
 
 const app = express();
 const port = Number(process.env.PORT ?? 3001);
@@ -210,7 +211,7 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
       return response.status(400).json({ error: 'No se subió ningún archivo' });
     }
 
-    const data = await (pdf as any)(request.file.buffer);
+    const data = await pdf(request.file.buffer);
     response.json({ text: data.text });
   } catch (error) {
     console.error('Error procesando PDF:', error);
