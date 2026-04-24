@@ -84,16 +84,17 @@ select {
 }
 
 .shell__brand {
-  display: grid;
-  gap: 12px;
-  justify-items: center;
-  padding: 12px 10px 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 10px;
 }
 
 .shell__logo {
-  height: 48px;
+  height: 64px;
   width: auto;
   object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.05));
 }
 
 .shell__brandCopy {

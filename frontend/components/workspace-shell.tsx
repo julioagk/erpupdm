@@ -101,11 +101,6 @@ export function WorkspaceShell({
         <div className="shell__panel">
           <div className="shell__brand">
             <img src="/logo.png" alt="UPDM Logo" className="shell__logo" />
-            <div className="shell__brandCopy">
-              <p className="shell__brandLabel">Sistema de gestión</p>
-              <h1 className="shell__brandTitle">ERP UPDM</h1>
-              <p className="shell__brandText">Ventas, gastos, banco y contabilidad.</p>
-            </div>
           </div>
 
           <div className="shell__userCard">
