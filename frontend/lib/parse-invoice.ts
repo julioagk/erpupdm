@@ -84,9 +84,9 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
   console.log('[PARSE] Texto recibido (primeros 500 chars):', normalizedText.slice(0, 500));
   
-  const folioPattern = /\b(?:factura|invoice|folio|serie\s*y\s*folio|ref(?:erencia)?|ticket|comprobante)[\s:=#-]*([A-Za-z0-9][A-Za-z0-9-]{2,20})\b/i;
-  const issuerPattern = /\b(?:emisor|raz[oó]n\s*social(?:\s*(?:del\s*)?emisor)?|nombre\s*(?:del\s*)?emisor|expedido\s*por|vendedor)[\s:=#-]*([^\r\n]{3,100})/i;
-  const receiverPattern = /\b(?:receptor|cliente|raz[oó]n\s*social(?:\s*(?:del\s*)?receptor)?|nombre\s*(?:del\s*)?receptor|nombre\s*(?:del\s*)?cliente|facturado\s*a|comprador)[\s:=#-]*([^\r\n]{3,100})/i;
+  const folioPattern = /\b(?:factura|folio|serie\s*folio|ticket|comprobante|n[úu]mero|invoice)[\s:=#-]*([A-Z0-9-]{4,25})\b/i;
+  const issuerPattern = /\b(?:emisor|nombre|raz[oó]n\s*social(?:\s*del\s*emisor)?|vendedor)[\s:=#-]*([^\r\n]{3,100})/i;
+  const receiverPattern = /\b(?:receptor|cliente|raz[oó]n\s*social(?:\s*del\s*receptor)?|facturado\s*a)[\s:=#-]*([^\r\n]{3,100})/i;
   
   const amountRegex = /(?:\$|MXN\s?)?\s?([0-9]{1,3}(?:[.,][0-9]{3})*[.,][0-9]{2}|[0-9]+[.,][0-9]{2})/;
   
@@ -115,16 +115,15 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   let folio = folioMatch ? folioMatch[1].trim() : '';
 
   // Fallback para Emisor: Buscar antes de un RFC o la primera línea significativa
-  if (!issuer || issuer.toLowerCase().includes('certificaci') || issuer.toLowerCase().includes('sello')) {
-    // Buscar: "ALGO RFC: XXXX" → capturar ALGO
-    const rfcMatch = normalizedText.match(/([A-ZÀ-ÿ\s0-9.,\&-]{4,60})\s*RFC\s*[:\s]+[A-Z]{3,4}[0-9]{6}/i);
-    if (rfcMatch && !rfcMatch[1].toLowerCase().includes('receptor') && !rfcMatch[1].toLowerCase().includes('cliente')) {
+  if (!issuer || /certificaci|sello|timbre|digital|fiscal|p[aá]gina/i.test(issuer)) {
+    // Buscar: "NOMBRE_EMPRESA RFC: XXXX"
+    const rfcMatch = normalizedText.match(/([A-ZÀ-ÿ\s0-9.,\&-]{4,60})\s+RFC\s*[:\s]+[A-Z]{3,4}[0-9]{6}/i);
+    if (rfcMatch && !/receptor|cliente|nosotros/i.test(rfcMatch[1])) {
       issuer = rfcMatch[1].trim();
     } else {
-      // Tomar la primera línea que parezca un nombre de empresa (evitando ruidos)
       const lines = normalizedText.split('\n')
         .map(l => l.trim())
-        .filter(l => l.length > 5 && !/^[0-9$]/.test(l) && !/sello|certificado|timbre|página|digital|fiscal|sucursal/i.test(l));
+        .filter(l => l.length > 5 && !/^[0-9$]/.test(l) && !/sello|certificado|timbre|p[aá]gina|digital|fiscal|sucursal|fecha|folio|total|factura/i.test(l));
       
       if (lines.length > 0) {
         issuer = lines[0];
@@ -132,19 +131,23 @@ export function parseInvoiceText(text: string): ParsedInvoice {
     }
   }
 
-  // Fallback para Folio: Buscar UUID, código alfanumérico tras FOLIO, o cualquier código largo
-  if (!folio || folio === 'SIN-FOLIO' || /mbre|fiscal|digital/i.test(folio)) {
-    // Paso 1: Buscar "FOLIO" seguido de un código
-    const specificFolioMatch = normalizedText.match(/\bFOLIO[\s:=#-]*\n?\s*([A-Za-z0-9]{3,20})\b/i);
+  // Fallback para Folio: Buscar UUID o códigos alfanuméricos largos
+  if (!folio || folio === 'SIN-FOLIO' || /mbre|fiscal|digital|fecha/i.test(folio)) {
+    const specificFolioMatch = normalizedText.match(/\bFOLIO[\s:=#-]*\n?\s*([A-Z0-9]{4,25})\b/i);
     if (specificFolioMatch) {
       folio = specificFolioMatch[1].trim();
     } else {
-      // Paso 2: Buscar UUID
       const uuidMatch = normalizedText.match(/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/i);
       if (uuidMatch) {
         folio = uuidMatch[0].slice(-12);
       } else {
-        folio = 'SIN-FOLIO';
+        // Buscar cualquier código alfanumérico largo que no sea una palabra común
+        const codeMatch = normalizedText.match(/\b([A-Z0-9]{8,15})\b/);
+        if (codeMatch && !/TOTAL|SUBTOTAL|EMISOR|RFC|IVA/.test(codeMatch[1])) {
+          folio = codeMatch[1];
+        } else {
+          folio = 'SIN-FOLIO';
+        }
       }
     }
   }
