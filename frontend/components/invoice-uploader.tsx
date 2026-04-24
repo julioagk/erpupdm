@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type DragEvent } from 'react';
-import { parseInvoice } from '@/lib/api';
+import { parseInvoice, API_URL } from '@/lib/api';
 import type { ParsedInvoice } from '@/lib/parse-invoice';
 
 // Usamos el tipo ParsedInvoice definido en lib/parse-invoice o similar
@@ -71,7 +71,7 @@ export function InvoiceUploader({
         const formData = new FormData();
         formData.append('file', file);
         
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://erpupdm-production.up.railway.app';
+        const apiUrl = API_URL;
         const response = await fetch(`${apiUrl}/api/extract-pdf`, {
           method: 'POST',
           body: formData
