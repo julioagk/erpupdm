@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Sans, Space_Grotesk } from 'next/font/google';
+import { BalanceProvider } from '@/context/balance-context';
 import './globals.css';
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-display' });
@@ -14,7 +15,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="es">
       <body className={`${spaceGrotesk.variable} ${ibmPlexSans.variable}`}>
-        {children}
+        <BalanceProvider>
+          {children}
+        </BalanceProvider>
       </body>
     </html>
   );

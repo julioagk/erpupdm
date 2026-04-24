@@ -1,17 +1,21 @@
+'use client';
+
 import { WorkspaceShell } from '@/components/workspace-shell';
 import { dashboardSeed, expenseInvoices, money, salesInvoices, sumAmounts } from '@/lib/data';
-
-// ── Todo lo que se sube ya está confirmado (sin estados) ──────────────────
-const totalSales    = sumAmounts(salesInvoices);   // Suma total de VENTAS registradas
-const totalExpenses = sumAmounts(expenseInvoices); // Suma total de COMPRAS registradas
-const bankBalance   = dashboardSeed.bankBalance;   // Saldo en banco
-
-// ── Balance ───────────────────────────────────────────────────────────────
-const totalAssets      = bankBalance + totalSales;   // Banco + lo que se ha vendido
-const totalLiabilities = totalExpenses;              // Todo lo que se ha comprado/gastado
-const capitalTotal     = totalAssets - totalLiabilities;
+import { useBalance } from '@/context/balance-context';
 
 export default function BancoPage() {
+  const { bankBalance } = useBalance();
+
+  // ── Todo lo que se sube ya está confirmado (sin estados) ──────────────────
+  const totalSales    = sumAmounts(salesInvoices);   // Suma total de VENTAS registradas
+  const totalExpenses = sumAmounts(expenseInvoices); // Suma total de COMPRAS registradas
+
+  // ── Balance ───────────────────────────────────────────────────────────────
+  const totalAssets      = bankBalance + totalSales;   // Banco + lo que se ha vendido
+  const totalLiabilities = totalExpenses;              // Todo lo que se ha comprado/gastado
+  const capitalTotal     = totalAssets - totalLiabilities;
+
   return (
     <WorkspaceShell
       active="/banco"

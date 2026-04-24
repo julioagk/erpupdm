@@ -1,3 +1,5 @@
+'use client';
+
 import { WorkspaceShell } from '@/components/workspace-shell';
 import {
   bankMovements,
@@ -8,14 +10,15 @@ import {
   salesInvoices,
   sumAmounts
 } from '@/lib/data';
+import { useBalance } from '@/context/balance-context';
 
 export default function DashboardPage() {
+  const { bankBalance } = useBalance();
   const monthSummary = buildAccountingSummary('month');
   const monthlySales = monthSummary.salesTotal;
   const monthlyExpenses = monthSummary.expenseTotal;
   const monthlyGoal = 60000;
   const salesProgress = Math.min(100, Math.round((monthlySales / monthlyGoal) * 100));
-  const bankBalance = dashboardSeed.bankBalance;
   const reconciledMovements = bankMovements.filter((movement) => movement.status === 'conciliado').length;
   const pendingMovements = bankMovements.filter((movement) => movement.status === 'pendiente').length;
   const salesByDay = filterByRange(salesInvoices, 'day');

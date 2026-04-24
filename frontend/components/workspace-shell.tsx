@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { dashboardSeed, money } from '@/lib/data';
+import { useBalance } from '@/context/balance-context';
 
 const navigation = [
   {
@@ -50,7 +51,7 @@ export function WorkspaceShell({
   eyebrow: string;
   children: React.ReactNode;
 }>) {
-  const [balance, setBalance] = useState(dashboardSeed.bankBalance);
+  const { bankBalance: balance, setBankBalance: setBalance } = useBalance();
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
