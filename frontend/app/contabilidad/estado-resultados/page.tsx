@@ -76,11 +76,20 @@ export default function EstadoResultadosPage() {
   };
 
   const allInvoices = data?.items || [];
-  const periodoSales = allInvoices.filter((i: any) => i.type === 'SALE' && filterByRange(i.date));
-  const periodoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && filterByRange(i.date));
   
-  const acumuladoSales = allInvoices.filter((i: any) => i.type === 'SALE' && new Date(i.date).getFullYear() === now.getFullYear());
-  const acumuladoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && new Date(i.date).getFullYear() === now.getFullYear());
+  // Para filtros de periodo usamos createdAt (fecha de registro en el sistema)
+  const periodoSales = allInvoices.filter((i: any) => i.type === 'SALE' && filterByRange(i.createdAt || i.date));
+  const periodoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && filterByRange(i.createdAt || i.date));
+  
+  // Para acumulado anual usamos createdAt también
+  const acumuladoSales = allInvoices.filter((i: any) => {
+    const d = i.createdAt || i.date;
+    return i.type === 'SALE' && d && d.slice(0, 4) === String(now.getFullYear());
+  });
+  const acumuladoExpenses = allInvoices.filter((i: any) => {
+    const d = i.createdAt || i.date;
+    return i.type === 'EXPENSE' && d && d.slice(0, 4) === String(now.getFullYear());
+  });
 
   const totalPeriodoIngresos = periodoSales.reduce((acc: number, cur: any) => acc + cur.amount, 0);
   const totalAcumuladoIngresos = acumuladoSales.reduce((acc: number, cur: any) => acc + cur.amount, 0);
