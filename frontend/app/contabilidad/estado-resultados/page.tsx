@@ -47,29 +47,28 @@ export default function EstadoResultadosPage() {
     );
   }
 
-  // Lógica de Filtrado por Rango (Corregida para zonas horarias locales)
+  // Lógica de Filtrado por Rango (Máxima robustez: comparando strings YYYY-MM-DD locales)
   const now = new Date();
-  const nowY = now.getFullYear();
-  const nowM = now.getMonth();
-  const nowD = now.getDate();
-  const todayStart = new Date(nowY, nowM, nowD).getTime();
+  const nY = now.getFullYear();
+  const nM = String(now.getMonth() + 1).padStart(2, '0');
+  const nD = String(now.getDate()).padStart(2, '0');
+  const todayYMD = `${nY}-${nM}-${nD}`;
 
   const filterByRange = (dateStr: string) => {
     if (!dateStr) return false;
-    const d = new Date(dateStr);
     
-    // Extraer componentes locales
-    const itemY = d.getFullYear();
-    const itemM = d.getMonth();
-    const itemD = d.getDate();
-    const itemTime = new Date(itemY, itemM, itemD).getTime();
+    // Extraer solo la parte de la fecha YYYY-MM-DD
+    const itemYMD = dateStr.slice(0, 10);
+    const [iY, iM, iD] = itemYMD.split('-').map(Number);
 
     if (range === 'all') return true;
-    if (range === 'day') return itemY === nowY && itemM === nowM && itemD === nowD;
-    if (range === 'year') return itemY === nowY;
-    if (range === 'month') return itemY === nowY && itemM === nowM;
+    if (range === 'day') return itemYMD === todayYMD;
+    if (range === 'year') return iY === nY;
+    if (range === 'month') return iY === nY && String(iM).padStart(2, '0') === nM;
     if (range === 'week') {
-      const diff = todayStart - itemTime;
+      const itemDate = new Date(iY, iM - 1, iD).getTime();
+      const todayDate = new Date(nY, now.getMonth(), now.getDate()).getTime();
+      const diff = todayDate - itemDate;
       const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
       return diff >= 0 && diff <= sevenDaysMs;
     }
