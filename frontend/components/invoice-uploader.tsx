@@ -221,60 +221,71 @@ export function InvoiceUploader({
         )}
 
         {fields && (
-          <div className="uploader-review">
-             <div className="uploader-review__grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              <label className="form__row">
-                <span className="form__label">Emisor (Proveedor)</span>
-                <input className="form__input" value={fields.issuer} onChange={e => setField('issuer', e.target.value)} />
-              </label>
-              <label className="form__row">
-                <span className="form__label">Receptor (Cliente)</span>
-                <input className="form__input" value={fields.receiver} onChange={e => setField('receiver', e.target.value)} />
-              </label>
-              <label className="form__row">
-                <span className="form__label">Folio / UUID</span>
-                <input className="form__input" value={fields.folio} onChange={e => setField('folio', e.target.value)} />
-              </label>
-              <label className="form__row">
-                <span className="form__label">Fecha</span>
-                <input className="form__input" type="date" value={fields.date} onChange={e => setField('date', e.target.value)} />
-              </label>
-              
-              {showCategorySelector && (
-                <label className="form__row" style={{ gridColumn: 'span 2' }}>
-                  <span className="form__label">Categoría de Gasto</span>
-                  <select className="form__select" value={fields.expenseType} onChange={e => setField('expenseType', e.target.value)}>
-                    {expenseTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
+          <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div className="uploader-review" style={{ flex: '1 1 400px' }}>
+               <div className="uploader-review__grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <label className="form__row">
+                  <span className="form__label">Emisor (Proveedor)</span>
+                  <input className="form__input" value={fields.issuer} onChange={e => setField('issuer', e.target.value)} />
                 </label>
-              )}
+                <label className="form__row">
+                  <span className="form__label">Receptor (Cliente)</span>
+                  <input className="form__input" value={fields.receiver} onChange={e => setField('receiver', e.target.value)} />
+                </label>
+                <label className="form__row">
+                  <span className="form__label">Folio / UUID</span>
+                  <input className="form__input" value={fields.folio} onChange={e => setField('folio', e.target.value)} />
+                </label>
+                <label className="form__row">
+                  <span className="form__label">Fecha</span>
+                  <input className="form__input" type="date" value={fields.date} onChange={e => setField('date', e.target.value)} />
+                </label>
+                
+                {showCategorySelector && (
+                  <label className="form__row" style={{ gridColumn: 'span 2' }}>
+                    <span className="form__label">Categoría de Gasto</span>
+                    <select className="form__select" value={fields.expenseType} onChange={e => setField('expenseType', e.target.value)}>
+                      {expenseTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  </label>
+                )}
 
-              <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-                <label className="form__row">
-                  <span className="form__label">Subtotal</span>
-                  <input className="form__input" type="number" step="0.01" value={fields.subtotal} onChange={e => setField('subtotal', parseFloat(e.target.value) || 0)} />
-                </label>
-                
-                <label className="form__row">
-                  <span className="form__label">IVA</span>
-                  <input className="form__input" type="number" step="0.01" value={fields.iva} onChange={e => setField('iva', parseFloat(e.target.value) || 0)} />
-                </label>
-                
-                <label className="form__row">
-                  <span className="form__label">Total</span>
-                  <input className="form__input" type="number" step="0.01" value={fields.total} onChange={e => setField('total', parseFloat(e.target.value) || 0)} />
-                </label>
+                <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                  <label className="form__row">
+                    <span className="form__label">Subtotal</span>
+                    <input className="form__input" type="number" step="0.01" value={fields.subtotal} onChange={e => setField('subtotal', parseFloat(e.target.value) || 0)} />
+                  </label>
+                  
+                  <label className="form__row">
+                    <span className="form__label">IVA</span>
+                    <input className="form__input" type="number" step="0.01" value={fields.iva} onChange={e => setField('iva', parseFloat(e.target.value) || 0)} />
+                  </label>
+                  
+                  <label className="form__row">
+                    <span className="form__label">Total</span>
+                    <input className="form__input" type="number" step="0.01" value={fields.total} onChange={e => setField('total', parseFloat(e.target.value) || 0)} />
+                  </label>
+                </div>
+              </div>
+
+              <div className="form__actions" style={{ marginTop: '20px' }}>
+                <button className="button button--primary" style={{ width: '100%' }} type="button" onClick={handleConfirm}>
+                  ✅ Todo correcto, registrar
+                </button>
+                <button className="button button--secondary" style={{ width: '100%' }} type="button" onClick={() => setFields(null)}>
+                  Volver a intentar
+                </button>
               </div>
             </div>
 
-            <div className="form__actions" style={{ marginTop: '20px' }}>
-              <button className="button button--primary" style={{ width: '100%' }} type="button" onClick={handleConfirm}>
-                ✅ Todo correcto, registrar
-              </button>
-              <button className="button button--secondary" style={{ width: '100%' }} type="button" onClick={() => setFields(null)}>
-                Volver a intentar
-              </button>
-            </div>
+            {fields.pdfData && (
+              <div style={{ flex: '1 1 400px', height: '520px', border: '1px solid #ddd', borderRadius: '12px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '10px 15px', background: '#f5f5f5', borderBottom: '1px solid #ddd', fontWeight: 600, fontSize: '0.9rem', color: '#555' }}>
+                  📄 Vista previa del documento original
+                </div>
+                <iframe src={fields.pdfData} width="100%" height="100%" style={{ border: 'none', flex: 1, backgroundColor: '#fff' }} />
+              </div>
+            )}
           </div>
         )}
       </div>
