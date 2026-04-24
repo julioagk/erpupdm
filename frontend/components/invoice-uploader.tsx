@@ -226,15 +226,15 @@ export function InvoiceUploader({
             <div className="uploader-review" style={{ flex: '1 1 350px' }}>
                <div className="uploader-review__grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <label className="form__row">
-                  <span className="form__label">Emisor (Proveedor)</span>
+                  <span className="form__label">{isSale ? 'Emisor (Nosotros)' : 'Proveedor'}</span>
                   <input className="form__input" value={fields.issuer} onChange={e => setField('issuer', e.target.value)} />
                 </label>
                 <label className="form__row">
-                  <span className="form__label">Receptor (Cliente)</span>
+                  <span className="form__label">{isSale ? 'Cliente' : 'Receptor (Nosotros)'}</span>
                   <input className="form__input" value={fields.receiver} onChange={e => setField('receiver', e.target.value)} />
                 </label>
                 <label className="form__row">
-                  <span className="form__label">Folio / No. Factura</span>
+                  <span className="form__label">{isSale ? 'No. de Factura' : 'Folio'}</span>
                   <input className="form__input" value={fields.folio} onChange={e => setField('folio', e.target.value)} />
                 </label>
                 <label className="form__row">
