@@ -8,7 +8,11 @@ const ibmPlexSans = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '
 
 export const metadata: Metadata = {
   title: 'ERP UPDM',
-  description: 'Sistema ERP de control financiero: ventas, compras, banco y contabilidad.'
+  description: 'Sistema ERP de control financiero: ventas, compras, banco y contabilidad.',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png'
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
