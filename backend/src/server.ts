@@ -211,7 +211,18 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
       return response.status(400).json({ error: 'No se subió ningún archivo' });
     }
 
-    const data = await pdf(request.file.buffer);
+    console.log('Tipo de pdf:', typeof pdf);
+    
+    let pdfFunc = pdf;
+    if (typeof pdf !== 'function' && pdf && typeof pdf.default === 'function') {
+      pdfFunc = pdf.default;
+    }
+
+    if (typeof pdfFunc !== 'function') {
+      throw new Error(`pdf-parse no cargó una función válida. Tipo detectado: ${typeof pdfFunc}`);
+    }
+
+    const data = await pdfFunc(request.file.buffer);
     response.json({ text: data.text });
   } catch (error) {
     console.error('Error procesando PDF:', error);
