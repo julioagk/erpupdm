@@ -110,9 +110,9 @@ export function InvoiceUploader({
       }
       
       if (isSale) {
-        parsed.issuer = 'UPDM S.A. DE C.V.';
+        parsed.issuer = 'UPDM';
       } else {
-        parsed.receiver = 'UPDM S.A. DE C.V.';
+        parsed.receiver = 'UPDM';
       }
       
       setFields(parsed);
@@ -132,9 +132,9 @@ export function InvoiceUploader({
     const parsed = parseInvoiceText(text);
     
     if (isSale) {
-      parsed.issuer = 'UPDM S.A. DE C.V.';
+      parsed.issuer = 'UPDM';
     } else {
-      parsed.receiver = 'UPDM S.A. DE C.V.';
+      parsed.receiver = 'UPDM';
     }
     
     setFields(parsed);
