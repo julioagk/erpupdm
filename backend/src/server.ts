@@ -210,21 +210,8 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
       return response.status(400).json({ error: 'No se subió ningún archivo' });
     }
 
-    const pdfImport: any = await import('pdf-parse');
-    console.log('Keys de pdfImport:', Object.keys(pdfImport));
-    
-    let pdfFunc = pdfImport.default || pdfImport;
-    if (typeof pdfFunc !== 'function' && typeof pdfImport === 'object') {
-      // Intentar encontrar la función por nombre o por tipo
-      pdfFunc = pdfImport.pdfParse || Object.values(pdfImport).find(v => typeof v === 'function');
-    }
-
-    if (typeof pdfFunc !== 'function') {
-      const detail = JSON.stringify(Object.keys(pdfImport));
-      throw new Error(`pdf-parse no cargó función. Keys: ${detail}. Tipo import: ${typeof pdfImport}`);
-    }
-
-    const data = await pdfFunc(request.file.buffer);
+    const pdf = require('pdf-parse');
+    const data = await pdf(request.file.buffer);
     response.json({ text: data.text });
   } catch (error) {
     console.error('Error procesando PDF:', error);
