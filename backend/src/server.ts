@@ -210,7 +210,7 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
       return response.status(400).json({ error: 'No se subió ningún archivo' });
     }
 
-    const pdfImport: any = await import('pdf-parse');
+    const pdfImport = (await import('pdf-parse')) as any;
     const pdfFunc = pdfImport.default || pdfImport;
     
     if (typeof pdfFunc !== 'function') {
