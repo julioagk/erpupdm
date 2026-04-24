@@ -247,6 +247,49 @@ export default function EstadoResultadosPage() {
            <button className="button button--primary">Descargar PDF</button>
         </div>
       </div>
+
+      {/* Nuevo Desglose Detallado */}
+      <div style={{ marginTop: '40px' }}>
+        <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px' }}>Desglose Detallado del Periodo</h3>
+        
+        <div className="dashboard__grid">
+          <div className="card" style={{ gridColumn: 'span 6' }}>
+            <div className="card__header"><h4 className="card__title">Ventas (Ingresos)</h4></div>
+            <div className="card__body">
+              <div className="list">
+                {periodoSales.map((s: any) => (
+                  <div key={s.id} className="list__item">
+                    <div className="list__meta">
+                      <strong>{s.customer}</strong>
+                      <span>{s.date.split('T')[0]} — {s.invoiceNumber}</span>
+                    </div>
+                    <div style={{ color: '#27ae60', fontWeight: 'bold' }}>+{fmt(s.amount)}</div>
+                  </div>
+                ))}
+                {periodoSales.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No hay ventas en este periodo.</p>}
+              </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ gridColumn: 'span 6' }}>
+            <div className="card__header"><h4 className="card__title">Gastos (Egresos)</h4></div>
+            <div className="card__body">
+              <div className="list">
+                {periodoExpenses.map((e: any) => (
+                  <div key={e.id} className="list__item">
+                    <div className="list__meta">
+                      <strong>{e.provider}</strong>
+                      <span>{e.category} — {e.date.split('T')[0]}</span>
+                    </div>
+                    <div style={{ color: '#c0392b', fontWeight: 'bold' }}>-{fmt(e.amount)}</div>
+                  </div>
+                ))}
+                {periodoExpenses.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No hay gastos en este periodo.</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </WorkspaceShell>
   );
 }
