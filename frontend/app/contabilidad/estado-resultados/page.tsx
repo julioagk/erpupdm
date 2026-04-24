@@ -50,15 +50,21 @@ export default function EstadoResultadosPage() {
   // Lógica de Filtrado por Rango
   const now = new Date();
   const filterByRange = (dateStr: string) => {
+    if (!dateStr) return false;
     const d = new Date(dateStr);
+    
+    // Normalizar a fechas sin hora para comparación de "Día"
+    const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const nDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
     if (range === 'all') return true;
-    if (range === 'day') return d.toDateString() === now.toDateString();
+    if (range === 'day') return dDay === nDay;
     if (range === 'year') return d.getFullYear() === now.getFullYear();
     if (range === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     if (range === 'week') {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(now.getDate() - 7);
-      return d >= oneWeekAgo;
+      const oneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      return d.getTime() >= oneWeekAgo.getTime();
     }
     return true;
   };
