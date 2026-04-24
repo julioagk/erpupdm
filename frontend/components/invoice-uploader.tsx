@@ -37,6 +37,7 @@ export function InvoiceUploader({
     'Servicios y Materiales Indirectos'
   ],
   showCategorySelector = true,
+  isSale = false,
   onParsed
 }: Readonly<{
   title: string;
@@ -45,6 +46,7 @@ export function InvoiceUploader({
   accent: string;
   expenseTypeOptions?: string[];
   showCategorySelector?: boolean;
+  isSale?: boolean;
   onParsed?: (invoice: EditableInvoice) => void;
 }>) {
   const [text, setText] = useState('');
@@ -95,6 +97,12 @@ export function InvoiceUploader({
       const { parseInvoiceText } = await import('@/lib/parse-invoice');
       const parsed = parseInvoiceText(content);
       
+      if (isSale) {
+        parsed.issuer = 'UPDM S.A. DE C.V.';
+      } else {
+        parsed.receiver = 'UPDM S.A. DE C.V.';
+      }
+      
       setFields(parsed);
       setMessage('✅ Lectura completada. Revisa los datos.');
     } catch (error) {
@@ -110,6 +118,13 @@ export function InvoiceUploader({
     if (!text.trim()) return;
     const { parseInvoiceText } = await import('@/lib/parse-invoice');
     const parsed = parseInvoiceText(text);
+    
+    if (isSale) {
+      parsed.issuer = 'UPDM S.A. DE C.V.';
+    } else {
+      parsed.receiver = 'UPDM S.A. DE C.V.';
+    }
+    
     setFields(parsed);
     setMessage('✅ Datos detectados del texto pegado.');
   }

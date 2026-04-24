@@ -104,6 +104,7 @@ export default function SalesListPage() {
           actionLabel="Venta"
           accent="rgba(191, 255, 117, 0.3)"
           showCategorySelector={false}
+          isSale={true}
           onParsed={handleConfirmNew}
         />
       </Modal>

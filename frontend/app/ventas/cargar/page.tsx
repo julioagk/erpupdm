@@ -42,6 +42,7 @@ export default function CargarVentasPage() {
           actionLabel="Venta"
           accent="rgba(31, 122, 79, 0.16)"
           showCategorySelector={false}
+          isSale={true}
           onParsed={handleParsed}
         />
 
