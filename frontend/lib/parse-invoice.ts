@@ -10,7 +10,8 @@ export type ParsedInvoice = {
   expenseType: string;
 };
 
-function normalizeNumber(value: string) {
+function normalizeNumber(value: string | null) {
+  if (!value) return 0;
   const cleaned = value.replace(/\s/g, '').replace(/[^0-9,.-]/g, '');
   if (cleaned.includes(',') && cleaned.includes('.')) {
     return Number(cleaned.replace(/\./g, '').replace(',', '.'));
@@ -21,46 +22,47 @@ function normalizeNumber(value: string) {
   return Number(cleaned);
 }
 
-// Extraer atributos de XML (SAT)
-function extractXmlAttribute(text: string, attribute: string) {
-  const pattern = new RegExp(`${attribute}="([^"]+)"`, 'i');
-  const match = text.match(pattern);
-  return match?.[1] || null;
-}
-
 export function parseInvoiceText(text: string): ParsedInvoice {
-  const normalizedText = text.replace(/\r/g, '\n');
+  const normalizedText = text.replace(/\r/g, '\n').trim();
   
-  // 1. Intentar detectar si es un XML del SAT
-  const xmlTotal = extractXmlAttribute(normalizedText, 'Total');
-  const xmlFolio = extractXmlAttribute(normalizedText, 'Folio');
-  const xmlUUID = extractXmlAttribute(normalizedText, 'UUID');
+  // ── 1. INTENTAR PARSEO ESTRUCTURAL (DOMParser para XML) ──
+  if (normalizedText.startsWith('<')) {
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(normalizedText, "text/xml");
+      
+      const comprobante = xmlDoc.getElementsByTagName("cfdi:Comprobante")[0] || xmlDoc.getElementsByTagName("Comprobante")[0];
+      const emisor = xmlDoc.getElementsByTagName("cfdi:Emisor")[0] || xmlDoc.getElementsByTagName("Emisor")[0];
+      const receptor = xmlDoc.getElementsByTagName("cfdi:Receptor")[0] || xmlDoc.getElementsByTagName("Receptor")[0];
+      const timbre = xmlDoc.getElementsByTagName("tfd:TimbreFiscalDigital")[0];
 
-  if (xmlTotal || xmlFolio || xmlUUID) {
-    const xmlSubtotal = extractXmlAttribute(normalizedText, 'SubTotal');
-    const xmlSerie = extractXmlAttribute(normalizedText, 'Serie');
-    const xmlDate = extractXmlAttribute(normalizedText, 'Fecha');
-    const xmlPaymentMethod = extractXmlAttribute(normalizedText, 'MetodoPago') || extractXmlAttribute(normalizedText, 'FormaPago');
-    const finalFolio = xmlSerie ? `${xmlSerie}-${xmlFolio || xmlUUID}` : (xmlFolio || xmlUUID);
-
-    const names = [...normalizedText.matchAll(/Nombre="([^"]+)"/gi)];
-    const issuer = names[0]?.[1] || 'Emisor no identificado';
-    const receiver = names[1]?.[1] || 'Receptor no identificado';
-
-    return {
-      issuer,
-      receiver,
-      folio: finalFolio || 'SIN-FOLIO',
-      date: xmlDate?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-      total: normalizeNumber(xmlTotal || '0'),
-      subtotal: normalizeNumber(xmlSubtotal || '0'),
-      iva: normalizeNumber(xmlTotal || '0') - normalizeNumber(xmlSubtotal || '0'),
-      paymentMethod: xmlPaymentMethod || 'PPD',
-      expenseType: 'Gastos de Administración'
-    };
+      if (comprobante) {
+        const total = normalizeNumber(comprobante.getAttribute("Total"));
+        const subtotal = normalizeNumber(comprobante.getAttribute("SubTotal"));
+        const serie = comprobante.getAttribute("Serie");
+        const folio = comprobante.getAttribute("Folio");
+        const uuid = timbre?.getAttribute("UUID");
+        const fecha = comprobante.getAttribute("Fecha");
+        const metodo = comprobante.getAttribute("MetodoPago");
+        
+        return {
+          issuer: emisor?.getAttribute("Nombre") || emisor?.getAttribute("nombre") || "Emisor no identificado",
+          receiver: receptor?.getAttribute("Nombre") || receptor?.getAttribute("nombre") || "Receptor no identificado",
+          folio: serie ? `${serie}-${folio || ''}` : (folio || uuid || 'SIN-FOLIO'),
+          date: fecha?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+          total: total,
+          subtotal: subtotal,
+          iva: Math.max(0, total - subtotal),
+          paymentMethod: metodo || "PUE",
+          expenseType: 'Gastos de Administración'
+        };
+      }
+    } catch (e) {
+      console.error("Error en parseo estructural, usando fallback de texto", e);
+    }
   }
 
-  // 2. Fallback a búsqueda por texto (para PDFs pegados o archivos planos)
+  // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
   const folioPattern = /(?:factura|invoice|folio|no\.?|numero|n[úu]m(?:ero)?)[\s:#-]*([A-Z0-9\s-]+)/i;
   const issuerPattern = /(emisor|proveedor|razon social emisor|razon social:|nombre emisor|nombre del emisor)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
   const totalPattern = /(total|importe total)[\s:#-]*\$?([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})?|[0-9]+(?:[.,][0-9]{2})?)/i;
