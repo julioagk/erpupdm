@@ -36,6 +36,12 @@ const navigation = [
     title: 'Contabilidad',
     hint: 'Resultados y análisis',
     matchPrefix: '/contabilidad'
+  },
+  {
+    href: '/configuracion',
+    title: 'Configuración',
+    hint: 'Perfil y ajustes',
+    matchPrefix: '/configuracion'
   }
 ];
 
@@ -55,8 +61,14 @@ export function WorkspaceShell({
   const { bankBalance: balance, setBankBalance: setBalance } = useBalance();
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [userName, setUserName] = useState('Julio');
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const savedName = localStorage.getItem('erp_user_name');
+    if (savedName) setUserName(savedName);
+  }, []);
 
   function handleLogout() {
     document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
@@ -102,9 +114,9 @@ export function WorkspaceShell({
           </div>
 
           <div className="shell__userCard">
-            <div className="shell__userAvatar">JF</div>
+            <div className="shell__userAvatar">{userName.substring(0, 2).toUpperCase()}</div>
             <div className="shell__userInfo">
-              <strong>Hola, Julio</strong>
+              <strong>Hola, {userName}</strong>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span>Administrador</span>
                 <button 
