@@ -14,12 +14,30 @@ export type ParsedInvoice = {
 function normalizeNumber(value: string | null) {
   if (!value) return 0;
   const cleaned = value.replace(/\s/g, '').replace(/[^0-9,.-]/g, '');
-  if (cleaned.includes(',') && cleaned.includes('.')) {
-    return Number(cleaned.replace(/\./g, '').replace(',', '.'));
+  
+  const lastDotIndex = cleaned.lastIndexOf('.');
+  const lastCommaIndex = cleaned.lastIndexOf(',');
+  
+  if (lastDotIndex > -1 && lastCommaIndex > -1) {
+    if (lastCommaIndex > lastDotIndex) {
+      // European format: 18.842,30
+      return Number(cleaned.replace(/\./g, '').replace(',', '.'));
+    } else {
+      // US/Mexico format: 18,842.30
+      return Number(cleaned.replace(/,/g, ''));
+    }
   }
-  if (cleaned.includes(',')) {
-    return Number(cleaned.replace(/,/g, '.'));
+  
+  if (lastCommaIndex > -1) {
+    // Si solo hay comas, podría ser un separador de miles (ej: 18,842) o un decimal (18,8)
+    // Si tiene exactamente 2 digitos al final, asumimos decimal
+    if (cleaned.length - lastCommaIndex === 3) {
+      return Number(cleaned.replace(',', '.'));
+    }
+    // De lo contrario, lo tratamos como separador de miles
+    return Number(cleaned.replace(/,/g, ''));
   }
+
   return Number(cleaned);
 }
 
