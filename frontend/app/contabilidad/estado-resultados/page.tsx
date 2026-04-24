@@ -9,10 +9,24 @@ export default function EstadoResultadosPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const expenseCategories = [
+    'Mensajería',
+    'Gastos de Administración',
+    'Honorarios Administrativos',
+    'Arrendamiento de Inmuebles',
+    'Viáticos y Gastos de Viaje',
+    'Gastos de Oficina',
+    'Combustibles y Lubricantes',
+    'Otros Impuestos y Derechos',
+    'Suscripciones y Cuotas',
+    'Comisiones Bancarias',
+    'Partidas No Deducibles'
+  ];
+
   useEffect(() => {
     async function loadAccounting() {
       try {
-        const result = await fetchFromApi('/api/accounting?range=month');
+        const result = await fetchFromApi('/api/accounting?range=all'); // Traemos todo para calcular Acumulado
         setData(result);
       } catch (error) {
         console.error('Error cargando contabilidad:', error);
@@ -31,105 +45,175 @@ export default function EstadoResultadosPage() {
     );
   }
 
-  const summary = data?.summary || { salesTotal: 0, expenseTotal: 0, net: 0, margin: 0 };
-  const sales = data?.sales || [];
-  const expenses = data?.expenses || [];
+  // Filtrar por mes actual para "Periodo"
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const allInvoices = data?.items || [];
+  
+  const periodoSales = allInvoices.filter((i: any) => i.type === 'SALE' && new Date(i.date).getMonth() === currentMonth && new Date(i.date).getFullYear() === currentYear);
+  const periodoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && new Date(i.date).getMonth() === currentMonth && new Date(i.date).getFullYear() === currentYear);
+  
+  const acumuladoSales = allInvoices.filter((i: any) => i.type === 'SALE' && new Date(i.date).getFullYear() === currentYear);
+  const acumuladoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && new Date(i.date).getFullYear() === currentYear);
+
+  const totalPeriodoIngresos = periodoSales.reduce((acc: number, cur: any) => acc + cur.amount, 0);
+  const totalAcumuladoIngresos = acumuladoSales.reduce((acc: number, cur: any) => acc + cur.amount, 0);
+
+  const getCategoryTotal = (expenses: any[], cat: string) => expenses.filter(e => e.category === cat).reduce((acc, cur) => acc + cur.amount, 0);
+
+  const totalPeriodoEgresos = periodoExpenses.reduce((acc: number, cur: any) => acc + cur.amount, 0);
+  const totalAcumuladoEgresos = acumuladoExpenses.reduce((acc: number, cur: any) => acc + cur.amount, 0);
+
+  const pct = (val: number, total: number) => total > 0 ? ((val / total) * 100).toFixed(2) : '0.00';
+  const fmt = (val: number) => val === 0 ? '-' : val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const dateStr = `${new Date(currentYear, currentMonth, 1).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} al ${new Date(currentYear, currentMonth + 1, 0).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}`;
 
   return (
     <WorkspaceShell
       active="/contabilidad/estado-resultados"
       eyebrow="Contabilidad"
       title="Estado de Resultados"
-      subtitle="Visión integral de tus finanzas en tiempo real. Todos los datos provienen de tu base de datos PostgreSQL."
+      subtitle="Reporte financiero formal generado automáticamente."
     >
-      <section className="dashboard__grid">
-        {/* Métricas Principales */}
-        <article className="card" style={{ gridColumn: 'span 3' }}>
-          <div className="card__header">
-            <h3 className="card__title">Ventas Totales</h3>
-            <span className="badge badge--success">Ingresos</span>
-          </div>
-          <div className="card__body">
-            <div className="dashboard__bigAmount" style={{ color: '#27ae60' }}>{money(summary.salesTotal)}</div>
-            <p className="card__label">{sales.length} facturas emitidas</p>
-          </div>
-        </article>
+      <div className="card" style={{ background: 'white', color: 'black', padding: '40px', fontFamily: 'serif', maxWidth: '1000px', margin: '0 auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px', borderBottom: '2px solid black', paddingBottom: '10px' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0', letterSpacing: '2px' }}>UPDM S.A DE C.V</h1>
+          <h2 style={{ fontSize: '14px', fontWeight: 'normal', margin: '5px 0' }}>Estado de Resultados del {dateStr}</h2>
+        </div>
 
-        <article className="card" style={{ gridColumn: 'span 3' }}>
-          <div className="card__header">
-            <h3 className="card__title">Gastos Totales</h3>
-            <span className="badge" style={{ backgroundColor: '#fdf2f2', color: '#c0392b' }}>Egresos</span>
-          </div>
-          <div className="card__body">
-            <div className="dashboard__bigAmount" style={{ color: '#c0392b' }}>{money(summary.expenseTotal)}</div>
-            <p className="card__label">{expenses.length} facturas de compra</p>
-          </div>
-        </article>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid black' }}>
+              <th style={{ textAlign: 'left', padding: '10px 0' }}></th>
+              <th style={{ textAlign: 'right', width: '15%' }}>Periodo</th>
+              <th style={{ textAlign: 'right', width: '8%' }}>%</th>
+              <th style={{ textAlign: 'right', width: '15%' }}>Acumulado</th>
+              <th style={{ textAlign: 'right', width: '8%' }}>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colSpan={5} style={{ padding: '15px 0 5px 0', fontWeight: 'bold', fontStyle: 'italic', fontSize: '13px' }}>Ingresos</td></tr>
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444' }}>INGRESOS</td></tr>
+            <tr>
+              <td style={{ paddingLeft: '20px' }}>Ventas Nacionales</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+            </tr>
+            <tr style={{ fontWeight: 'bold' }}>
+              <td style={{ paddingLeft: '10px' }}>Total INGRESOS</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+            </tr>
+            <tr style={{ fontWeight: 'bold', borderBottom: '1px solid #ccc' }}>
+              <td style={{ fontStyle: 'italic', padding: '5px 0' }}>Total Ingresos</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+            </tr>
 
-        <article className="card" style={{ gridColumn: 'span 3' }}>
-          <div className="card__header">
-            <h3 className="card__title">Utilidad Neta</h3>
-            <span className="badge">Resultado</span>
-          </div>
-          <div className="card__body">
-            <div className="dashboard__bigAmount">{money(summary.net)}</div>
-            <p className="card__label">Balance del periodo</p>
-          </div>
-        </article>
+            <tr><td colSpan={5} style={{ padding: '20px 0 5px 0', fontWeight: 'bold', fontStyle: 'italic', fontSize: '13px' }}>Egresos</td></tr>
+            
+            {/* Costo de Ventas */}
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444' }}>COSTO DE VENTAS</td></tr>
+            <tr>
+              <td style={{ paddingLeft: '20px' }}>Servicios y Materiales Indirectos</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
+            <tr style={{ fontWeight: 'bold', borderBottom: '1px solid #eee' }}>
+              <td style={{ paddingLeft: '10px' }}>Total COSTO DE VENTAS</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
 
-        <article className="card" style={{ gridColumn: 'span 3' }}>
-          <div className="card__header">
-            <h3 className="card__title">Margen Bruto</h3>
-            <span className="badge">Eficiencia</span>
-          </div>
-          <div className="card__body">
-            <div className="dashboard__bigAmount">{summary.margin.toFixed(1)}%</div>
-            <p className="card__label">Porcentaje de utilidad</p>
-          </div>
-        </article>
+            {/* Gastos de Administración Section */}
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444', paddingTop: '10px' }}>GASTOS DE VENTA Y ADMINISTRACION</td></tr>
+            {expenseCategories.map(cat => {
+              const perTotal = getCategoryTotal(periodoExpenses, cat);
+              const acuTotal = getCategoryTotal(acumuladoExpenses, cat);
+              return (
+                <tr key={cat}>
+                  <td style={{ paddingLeft: '20px' }}>{cat}</td>
+                  <td style={{ textAlign: 'right' }}>{fmt(perTotal)}</td>
+                  <td style={{ textAlign: 'right' }}>{pct(perTotal, totalPeriodoIngresos)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmt(acuTotal)}</td>
+                  <td style={{ textAlign: 'right' }}>{pct(acuTotal, totalAcumuladoIngresos)}</td>
+                </tr>
+              );
+            })}
+            <tr style={{ fontWeight: 'bold', borderTop: '1px solid #ccc' }}>
+              <td style={{ paddingLeft: '10px', padding: '5px 10px' }}>Total GASTOS DE VENTA Y ADMINISTRACION</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
+            </tr>
 
-        {/* Tablas Detalladas */}
-        <article className="card" style={{ gridColumn: 'span 6' }}>
-          <div className="card__header">
-            <h3 className="card__title">Detalle de Ventas</h3>
-            <button className="chip" onClick={() => window.print()} style={{ cursor: 'pointer' }}>🖨️ Imprimir</button>
-          </div>
-          <div className="card__body">
-            <div className="list">
-              {sales.map((sale: any) => (
-                <div key={sale.id} className="list__item">
-                  <div className="list__meta">
-                    <strong>{sale.customer}</strong>
-                    <span>{sale.date} — Folio: {sale.invoiceNumber}</span>
-                  </div>
-                  <div className="list__amount" style={{ color: '#27ae60' }}>+{money(sale.amount)}</div>
-                </div>
-              ))}
-              {sales.length === 0 && <p className="footer-note">No hay ventas registradas en este periodo.</p>}
-            </div>
-          </div>
-        </article>
+            {/* Otros Section Placeholders */}
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444', paddingTop: '10px' }}>COSTO INTEGRAL DE FINANCIAMIENTO</td></tr>
+            <tr style={{ fontWeight: 'bold' }}>
+              <td style={{ paddingLeft: '10px' }}>Total COSTO INTEGRAL DE FINANCIAMIENTO</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
 
-        <article className="card" style={{ gridColumn: 'span 6' }}>
-          <div className="card__header">
-            <h3 className="card__title">Detalle de Gastos</h3>
-          </div>
-          <div className="card__body">
-            <div className="list">
-              {expenses.map((exp: any) => (
-                <div key={exp.id} className="list__item">
-                  <div className="list__meta">
-                    <strong>{exp.provider}</strong>
-                    <span>{exp.category} — {exp.date}</span>
-                  </div>
-                  <div className="list__amount" style={{ color: '#c0392b' }}>-{money(exp.amount)}</div>
-                </div>
-              ))}
-              {expenses.length === 0 && <p className="footer-note">No hay gastos registrados en este periodo.</p>}
-            </div>
-          </div>
-        </article>
-      </section>
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444', paddingTop: '10px' }}>OTROS INGRESOS Y GASTOS</td></tr>
+            <tr style={{ fontWeight: 'bold' }}>
+              <td style={{ paddingLeft: '10px' }}>Total OTROS INGRESOS Y GASTOS</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
+
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444', paddingTop: '10px' }}>ISR Y PTU</td></tr>
+            <tr style={{ fontWeight: 'bold' }}>
+              <td style={{ paddingLeft: '10px' }}>Total ISR Y PTU</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
+
+            <tr style={{ fontWeight: 'bold', borderTop: '2px solid black', backgroundColor: '#f9f9f9' }}>
+              <td style={{ fontStyle: 'italic', padding: '10px 0' }}>Total Egresos</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
+            </tr>
+
+            <tr style={{ height: '40px' }}></tr>
+
+            <tr style={{ fontWeight: 'bold', borderTop: '3px double black', fontSize: '15px' }}>
+              <td style={{ fontStyle: 'italic', padding: '15px 0' }}>Utilidad (o Pérdida)</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos - totalPeriodoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoIngresos - totalPeriodoEgresos, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos - totalAcumuladoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoIngresos - totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div style={{ marginTop: '50px', textAlign: 'right' }}>
+           <button className="button button--secondary" onClick={() => window.print()} style={{ marginRight: '10px' }}>🖨️ Imprimir Reporte</button>
+           <button className="button button--primary">Descargar PDF</button>
+        </div>
+      </div>
     </WorkspaceShell>
   );
 }
