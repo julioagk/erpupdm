@@ -33,7 +33,9 @@ export default function LoginPage() {
     <main className="login-page">
       <div className="login-card">
         <div className="login-card__header">
-          <div className="login-logo">UPDM</div>
+          <div className="login-logo-container">
+            <img src="/logo.png" alt="UPDM Logo" className="login-logo-img" />
+          </div>
           <h1 className="login-title">Control Financiero</h1>
           <p className="login-subtitle">Ingresa tus credenciales para acceder al ERP.</p>
         </div>
@@ -109,15 +111,16 @@ export default function LoginPage() {
           margin-bottom: 32px;
         }
 
-        .login-logo {
-          display: inline-block;
-          padding: 8px 20px;
-          background: linear-gradient(135deg, #bfff75, #8bc34a);
-          border-radius: 999px;
-          font-weight: 800;
-          font-size: 1.2rem;
-          margin-bottom: 16px;
-          color: #20301f;
+        .login-logo-container {
+          margin-bottom: 24px;
+          display: flex;
+          justify-content: center;
+        }
+        
+        .login-logo-img {
+          height: 80px;
+          width: auto;
+          filter: drop-shadow(0 8px 16px rgba(0,0,0,0.06));
         }
 
         .login-title {

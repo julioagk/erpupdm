@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, type DragEvent } from 'react';
-import { parseInvoiceText, type ParsedInvoice } from '@/lib/api';
+import { parseInvoice } from '@/lib/api';
+import type { ParsedInvoice } from '@/lib/parse-invoice';
 
 // Usamos el tipo ParsedInvoice definido en lib/parse-invoice o similar
 type EditableInvoice = {

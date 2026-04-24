@@ -185,7 +185,7 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
       return response.status(400).json({ error: 'No se subió ningún archivo' });
     }
 
-    const data = await pdf(request.file.buffer);
+    const data = await (pdf as any)(request.file.buffer);
     response.json({ text: data.text });
   } catch (error) {
     console.error(error);

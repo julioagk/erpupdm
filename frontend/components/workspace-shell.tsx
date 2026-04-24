@@ -100,7 +100,7 @@ export function WorkspaceShell({
       <aside className="shell__sidebar">
         <div className="shell__panel">
           <div className="shell__brand">
-            <div className="shell__brandMark">ERP</div>
+            <img src="/logo.png" alt="UPDM Logo" className="shell__logo" />
             <div className="shell__brandCopy">
               <p className="shell__brandLabel">Sistema de gestión</p>
               <h1 className="shell__brandTitle">ERP UPDM</h1>

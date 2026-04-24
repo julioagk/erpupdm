@@ -85,9 +85,15 @@ select {
 
 .shell__brand {
   display: grid;
-  gap: 4px;
+  gap: 12px;
   justify-items: center;
-  padding: 8px 10px 4px;
+  padding: 12px 10px 8px;
+}
+
+.shell__logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
 }
 
 .shell__brandCopy {
