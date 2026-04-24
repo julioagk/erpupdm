@@ -139,7 +139,7 @@ app.post('/api/invoices/parse', (request, response) => {
 
   response.json({
     parsed,
-    humanSummary: `${parsed.kind} detectado para ${parsed.provider} por ${parsed.total}`
+    humanSummary: `${parsed.kind} detectado para ${parsed.provider} por ${parsed.amount}`
   });
 });
 
