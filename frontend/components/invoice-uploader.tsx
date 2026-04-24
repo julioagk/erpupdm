@@ -249,14 +249,20 @@ export function InvoiceUploader({
                 </label>
               )}
 
-              <label className="form__row">
-                <span className="form__label">Subtotal</span>
-                <input className="form__input" type="number" value={fields.subtotal} onChange={e => setField('subtotal', parseFloat(e.target.value) || 0)} />
-              </label>
-              <label className="form__row">
-                <span className="form__label">Total</span>
-                <input className="form__input" type="number" value={fields.total} onChange={e => setField('total', parseFloat(e.target.value) || 0)} />
-              </label>
+              <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                <label className="form__row">
+                  <span className="form__label">Subtotal</span>
+                  <input className="form__input" type="number" step="0.01" value={fields.subtotal} onChange={e => setField('subtotal', parseFloat(e.target.value) || 0)} />
+                </label>
+                <label className="form__row">
+                  <span className="form__label">IVA</span>
+                  <input className="form__input" type="number" step="0.01" value={fields.iva} onChange={e => setField('iva', parseFloat(e.target.value) || 0)} />
+                </label>
+                <label className="form__row">
+                  <span className="form__label">Total</span>
+                  <input className="form__input" type="number" step="0.01" value={fields.total} onChange={e => setField('total', parseFloat(e.target.value) || 0)} />
+                </label>
+              </div>
             </div>
 
             <div className="form__actions" style={{ marginTop: '20px' }}>
