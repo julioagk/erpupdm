@@ -8,6 +8,7 @@ export type ParsedInvoice = {
   total: number;
   paymentMethod: string;
   expenseType: string;
+  pdfData?: string;
 };
 
 function normalizeNumber(value: string | null) {
