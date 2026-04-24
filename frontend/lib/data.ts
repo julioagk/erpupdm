@@ -195,10 +195,11 @@ export const dashboardSeed = {
 };
 
 export function money(value: number) {
-  return new Intl.NumberFormat('es-ES', {
+  return new Intl.NumberFormat('es-MX', {
     style: 'currency',
     currency: 'MXN',
-    maximumFractionDigits: 0
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(value);
 }
 

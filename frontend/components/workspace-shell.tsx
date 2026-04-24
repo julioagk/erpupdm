@@ -141,10 +141,11 @@ export function WorkspaceShell({
                   ref={inputRef}
                   className="shell__balanceInput"
                   type="number"
+                  step="0.01"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKey}
-                  placeholder="0"
+                  placeholder="0.00"
                 />
                 <div className="shell__balanceActions">
                   <button className="shell__balanceSave" onClick={commitEdit} title="Guardar">✓</button>
