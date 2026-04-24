@@ -82,9 +82,11 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   }
 
   // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
-  const folioPattern = /(?:factura|invoice|folio|no\.?|numero|n[úu]m(?:ero)?|serie\s*y\s*folio|ref)[\s:#-]*([A-Z0-9-]{3,25})/i;
-  const issuerPattern = /(?:emisor|proveedor|razon\s*social(?:\s*emisor)?|razon\s*social:|nombre\s*emisor|nombre\s*del\s*emisor|expedido\s*por)[\s:#-]*([^\r\n]+)/i;
-  const receiverPattern = /(?:receptor|cliente|razon\s*social(?:\s*receptor)?|nombre\s*receptor|nombre\s*del\s*receptor|facturado\s*a)[\s:#-]*([^\r\n]+)/i;
+  console.log('[PARSE] Texto recibido (primeros 500 chars):', normalizedText.slice(0, 500));
+  
+  const folioPattern = /(?:factura|invoice|folio|no\.?\s*(?:de\s*)?(?:factura)?|numero|n[úu]m(?:ero)?|serie\s*y\s*folio|ref(?:erencia)?|ticket|comprobante)[\s:=#-]*([A-Za-z0-9][A-Za-z0-9-]{2,30})/i;
+  const issuerPattern = /(?:emisor|proveedor|raz[oó]n\s*social(?:\s*(?:del\s*)?emisor)?|raz[oó]n\s*social:|nombre\s*(?:del\s*)?emisor|nombre\s*(?:del\s*)?proveedor|expedido\s*por|vendedor)[\s:=#-]*([^\r\n]+)/i;
+  const receiverPattern = /(?:receptor|cliente|raz[oó]n\s*social(?:\s*(?:del\s*)?receptor)?|nombre\s*(?:del\s*)?receptor|nombre\s*(?:del\s*)?cliente|facturado\s*a|comprador)[\s:=#-]*([^\r\n]+)/i;
   
   const amountRegex = /(?:\$|MXN\s?)?\s?([0-9]{1,3}(?:[.,][0-9]{3})*[.,][0-9]{2}|[0-9]+[.,][0-9]{2})/;
   
@@ -114,27 +116,47 @@ export function parseInvoiceText(text: string): ParsedInvoice {
 
   // Fallback para Emisor: Buscar antes de un RFC o la primera línea significativa
   if (!issuer) {
-    const rfcMatch = normalizedText.match(/([A-Z\s0-9.,&-]+)\s+RFC\s*[:\s]+[A-Z]{3,4}[0-9]{6}/i);
+    // Buscar: "ALGO RFC: XXXX" → capturar ALGO
+    const rfcMatch = normalizedText.match(/([A-ZÀ-ÿ\s0-9.,\&-]{4,60})\s*RFC\s*[:\s]+[A-Z]{3,4}[0-9]{6}/i);
     if (rfcMatch) {
       issuer = rfcMatch[1].trim();
     } else {
-      // Tomar la primera línea que no sea un número o fecha corta
-      const lines = normalizedText.split('\n').map(l => l.trim()).filter(l => l.length > 5);
-      issuer = lines[0] || 'Emisor no identificado';
+      // Buscar después de "EMISOR:" con más flexibilidad (saltos de línea)
+      const emisorLineMatch = normalizedText.match(/EMISOR[\s:#-]*\n?\s*([^\n]{4,60})/i);
+      if (emisorLineMatch) {
+        issuer = emisorLineMatch[1].trim();
+      } else {
+        // Tomar la primera línea que parezca un nombre de empresa
+        const lines = normalizedText.split('\n').map(l => l.trim()).filter(l => l.length > 5 && !/^[0-9$]/.test(l));
+        issuer = lines[0] || 'Emisor no identificado';
+      }
     }
   }
 
-  // Fallback para Folio: Buscar UUID o buscar cerca de la palabra FOLIO si falló el patrón
+  // Fallback para Folio: Buscar UUID, código alfanumérico tras FOLIO, o cualquier código largo
   if (!folio || folio === 'SIN-FOLIO') {
-    const specificFolioMatch = normalizedText.match(/FOLIO[\s:#-]*([A-Z0-9]{5,25})/i);
+    // Paso 1: Buscar "FOLIO" seguido de un código (con soporte para saltos de línea)
+    const specificFolioMatch = normalizedText.match(/FOLIO[\s:=#-]*\n?\s*([A-Za-z0-9][A-Za-z0-9-]{3,30})/i);
     if (specificFolioMatch) {
       folio = specificFolioMatch[1].trim();
     } else {
+      // Paso 2: Buscar UUID
       const uuidMatch = normalizedText.match(/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/i);
-      if (uuidMatch) folio = uuidMatch[0].slice(-12); // Tomar los últimos 12 del UUID
-      else folio = 'SIN-FOLIO';
+      if (uuidMatch) {
+        folio = uuidMatch[0].slice(-12);
+      } else {
+        // Paso 3: Buscar códigos alfanuméricos largos que parezcan folios internos
+        const internalCodeMatch = normalizedText.match(/(?:ticket|comprobante|referencia|transacci[oó]n|operaci[oó]n)[\s:=#-]*\n?\s*([A-Za-z0-9][A-Za-z0-9-]{4,30})/i);
+        if (internalCodeMatch) {
+          folio = internalCodeMatch[1].trim();
+        } else {
+          folio = 'SIN-FOLIO';
+        }
+      }
     }
   }
+  
+  console.log('[PARSE] Resultado → Emisor:', issuer, '| Folio:', folio);
 
   // Limpieza final para quitar ruidos comunes
   const cleanup = (text: string) => {
