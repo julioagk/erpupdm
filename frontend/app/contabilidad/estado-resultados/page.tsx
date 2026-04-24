@@ -8,6 +8,7 @@ import { fetchFromApi } from '@/lib/api';
 export default function EstadoResultadosPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('month');
 
   const expenseCategories = [
     'Mensajería',
@@ -25,8 +26,9 @@ export default function EstadoResultadosPage() {
 
   useEffect(() => {
     async function loadAccounting() {
+      setLoading(true);
       try {
-        const result = await fetchFromApi('/api/accounting?range=all'); // Traemos todo para calcular Acumulado
+        const result = await fetchFromApi('/api/accounting?range=all');
         setData(result);
       } catch (error) {
         console.error('Error cargando contabilidad:', error);
@@ -37,7 +39,7 @@ export default function EstadoResultadosPage() {
     loadAccounting();
   }, []);
 
-  if (loading) {
+  if (loading || !data) {
     return (
       <WorkspaceShell active="/contabilidad/estado-resultados" eyebrow="Contabilidad" title="Generando reporte..." subtitle="Calculando estados financieros reales...">
         <div style={{ padding: '40px', textAlign: 'center' }}>Procesando cifras reales desde Railway...</div>
@@ -45,18 +47,28 @@ export default function EstadoResultadosPage() {
     );
   }
 
-  // Filtrar por mes actual para "Periodo"
+  // Lógica de Filtrado por Rango
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const filterByRange = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (range === 'all') return true;
+    if (range === 'day') return d.toDateString() === now.toDateString();
+    if (range === 'year') return d.getFullYear() === now.getFullYear();
+    if (range === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (range === 'week') {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(now.getDate() - 7);
+      return d >= oneWeekAgo;
+    }
+    return true;
+  };
 
   const allInvoices = data?.items || [];
+  const periodoSales = allInvoices.filter((i: any) => i.type === 'SALE' && filterByRange(i.date));
+  const periodoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && filterByRange(i.date));
   
-  const periodoSales = allInvoices.filter((i: any) => i.type === 'SALE' && new Date(i.date).getMonth() === currentMonth && new Date(i.date).getFullYear() === currentYear);
-  const periodoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && new Date(i.date).getMonth() === currentMonth && new Date(i.date).getFullYear() === currentYear);
-  
-  const acumuladoSales = allInvoices.filter((i: any) => i.type === 'SALE' && new Date(i.date).getFullYear() === currentYear);
-  const acumuladoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && new Date(i.date).getFullYear() === currentYear);
+  const acumuladoSales = allInvoices.filter((i: any) => i.type === 'SALE' && new Date(i.date).getFullYear() === now.getFullYear());
+  const acumuladoExpenses = allInvoices.filter((i: any) => i.type === 'EXPENSE' && new Date(i.date).getFullYear() === now.getFullYear());
 
   const totalPeriodoIngresos = periodoSales.reduce((acc: number, cur: any) => acc + cur.amount, 0);
   const totalAcumuladoIngresos = acumuladoSales.reduce((acc: number, cur: any) => acc + cur.amount, 0);
@@ -69,19 +81,61 @@ export default function EstadoResultadosPage() {
   const pct = (val: number, total: number) => total > 0 ? ((val / total) * 100).toFixed(2) : '0.00';
   const fmt = (val: number) => val === 0 ? '-' : val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const dateStr = `${new Date(currentYear, currentMonth, 1).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })} al ${new Date(currentYear, currentMonth + 1, 0).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+  const rangeLabels = { day: 'Hoy', week: 'Última Semana', month: 'Este Mes', year: 'Este Año', all: 'Histórico' };
 
   return (
     <WorkspaceShell
       active="/contabilidad/estado-resultados"
       eyebrow="Contabilidad"
-      title="Estado de Resultados"
-      subtitle="Reporte financiero formal generado automáticamente."
+      title="Dashboard Financiero"
+      subtitle="Control total de ingresos, egresos y liquidez bancaria."
     >
-      <div className="card" style={{ background: 'white', color: 'black', padding: '40px', fontFamily: 'serif', maxWidth: '1000px', margin: '0 auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
+      {/* 1. Filtros de Tiempo */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '30px', overflowX: 'auto', paddingBottom: '10px' }}>
+        {(['day', 'week', 'month', 'year', 'all'] as const).map(r => (
+          <button 
+            key={r}
+            className={`chip ${range === r ? 'chip--active' : ''}`}
+            onClick={() => setRange(r)}
+            style={{ padding: '10px 20px', cursor: 'pointer', border: range === r ? '2px solid var(--primary)' : '1px solid #ddd' }}
+          >
+            {rangeLabels[r]}
+          </button>
+        ))}
+      </div>
+
+      {/* 2. Cuadros de Resumen (Tarjetas) */}
+      <section className="dashboard__grid" style={{ marginBottom: '40px' }}>
+        <article className="card" style={{ gridColumn: 'span 4', borderLeft: '5px solid #27ae60' }}>
+          <div className="card__header"><h3 className="card__title">Total Ingresos</h3></div>
+          <div className="card__body">
+            <div className="dashboard__bigAmount" style={{ color: '#27ae60' }}>{fmt(totalPeriodoIngresos)}</div>
+            <p className="card__label">{rangeLabels[range]}</p>
+          </div>
+        </article>
+
+        <article className="card" style={{ gridColumn: 'span 4', borderLeft: '5px solid #c0392b' }}>
+          <div className="card__header"><h3 className="card__title">Total Egresos</h3></div>
+          <div className="card__body">
+            <div className="dashboard__bigAmount" style={{ color: '#c0392b' }}>{fmt(totalPeriodoEgresos)}</div>
+            <p className="card__label">{rangeLabels[range]}</p>
+          </div>
+        </article>
+
+        <article className="card" style={{ gridColumn: 'span 4', borderLeft: '5px solid var(--primary)' }}>
+          <div className="card__header"><h3 className="card__title">Saldo en Banco</h3></div>
+          <div className="card__body">
+            <div className="dashboard__bigAmount" style={{ color: 'var(--primary)' }}>{fmt(data.bankBalance)}</div>
+            <p className="card__label">Liquidez Real (Banorte)</p>
+          </div>
+        </article>
+      </section>
+
+      {/* 3. Estado de Resultados (Tabla Formal) */}
+      <div className="card" style={{ background: 'white', color: 'black', padding: '40px', fontFamily: 'serif', maxWidth: '1000px', margin: '0 auto 40px auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
         <div style={{ textAlign: 'center', marginBottom: '40px', borderBottom: '2px solid black', paddingBottom: '10px' }}>
           <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0', letterSpacing: '2px' }}>UPDM S.A DE C.V</h1>
-          <h2 style={{ fontSize: '14px', fontWeight: 'normal', margin: '5px 0' }}>Estado de Resultados del {dateStr}</h2>
+          <h2 style={{ fontSize: '14px', fontWeight: 'normal', margin: '5px 0' }}>Estado de Resultados ({rangeLabels[range]})</h2>
         </div>
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
@@ -96,16 +150,8 @@ export default function EstadoResultadosPage() {
           </thead>
           <tbody>
             <tr><td colSpan={5} style={{ padding: '15px 0 5px 0', fontWeight: 'bold', fontStyle: 'italic', fontSize: '13px' }}>Ingresos</td></tr>
-            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444' }}>INGRESOS</td></tr>
             <tr>
               <td style={{ paddingLeft: '20px' }}>Ventas Nacionales</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
-              <td style={{ textAlign: 'right' }}>100.00</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
-              <td style={{ textAlign: 'right' }}>100.00</td>
-            </tr>
-            <tr style={{ fontWeight: 'bold' }}>
-              <td style={{ paddingLeft: '10px' }}>Total INGRESOS</td>
               <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
               <td style={{ textAlign: 'right' }}>100.00</td>
               <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
@@ -120,29 +166,10 @@ export default function EstadoResultadosPage() {
             </tr>
 
             <tr><td colSpan={5} style={{ padding: '20px 0 5px 0', fontWeight: 'bold', fontStyle: 'italic', fontSize: '13px' }}>Egresos</td></tr>
-            
-            {/* Costo de Ventas */}
-            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444' }}>COSTO DE VENTAS</td></tr>
-            <tr>
-              <td style={{ paddingLeft: '20px' }}>Servicios y Materiales Indirectos</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-            </tr>
-            <tr style={{ fontWeight: 'bold', borderBottom: '1px solid #eee' }}>
-              <td style={{ paddingLeft: '10px' }}>Total COSTO DE VENTAS</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-            </tr>
-
-            {/* Gastos de Administración Section */}
-            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444', paddingTop: '10px' }}>GASTOS DE VENTA Y ADMINISTRACION</td></tr>
             {expenseCategories.map(cat => {
               const perTotal = getCategoryTotal(periodoExpenses, cat);
               const acuTotal = getCategoryTotal(acumuladoExpenses, cat);
+              if (perTotal === 0 && acuTotal === 0) return null;
               return (
                 <tr key={cat}>
                   <td style={{ paddingLeft: '20px' }}>{cat}</td>
@@ -153,42 +180,6 @@ export default function EstadoResultadosPage() {
                 </tr>
               );
             })}
-            <tr style={{ fontWeight: 'bold', borderTop: '1px solid #ccc' }}>
-              <td style={{ paddingLeft: '10px', padding: '5px 10px' }}>Total GASTOS DE VENTA Y ADMINISTRACION</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
-              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
-              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
-            </tr>
-
-            {/* Otros Section Placeholders */}
-            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444', paddingTop: '10px' }}>COSTO INTEGRAL DE FINANCIAMIENTO</td></tr>
-            <tr style={{ fontWeight: 'bold' }}>
-              <td style={{ paddingLeft: '10px' }}>Total COSTO INTEGRAL DE FINANCIAMIENTO</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-            </tr>
-
-            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444', paddingTop: '10px' }}>OTROS INGRESOS Y GASTOS</td></tr>
-            <tr style={{ fontWeight: 'bold' }}>
-              <td style={{ paddingLeft: '10px' }}>Total OTROS INGRESOS Y GASTOS</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-            </tr>
-
-            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', color: '#444', paddingTop: '10px' }}>ISR Y PTU</td></tr>
-            <tr style={{ fontWeight: 'bold' }}>
-              <td style={{ paddingLeft: '10px' }}>Total ISR Y PTU</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-            </tr>
-
             <tr style={{ fontWeight: 'bold', borderTop: '2px solid black', backgroundColor: '#f9f9f9' }}>
               <td style={{ fontStyle: 'italic', padding: '10px 0' }}>Total Egresos</td>
               <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
@@ -206,55 +197,21 @@ export default function EstadoResultadosPage() {
               <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos - totalAcumuladoEgresos)}</td>
               <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoIngresos - totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
             </tr>
-
-            <tr style={{ height: '50px' }}></tr>
-            
-            {/* Sección Solicitada: (BANCOS) + (VENTAS) - (COMPRAS) */}
-            <tr><td colSpan={5} style={{ padding: '10px 0', fontWeight: 'bold', borderTop: '1px solid black', fontSize: '13px' }}>CONCILIACIÓN DE LIQUIDEZ (BANCOS)</td></tr>
-            <tr>
-              <td style={{ paddingLeft: '10px' }}>Saldo Inicial en Bancos (Ajustado)</td>
-              <td style={{ textAlign: 'right' }}>{fmt(data.bankBalance - (totalPeriodoIngresos - totalPeriodoEgresos))}</td>
-              <td></td>
-              <td style={{ textAlign: 'right' }}>{fmt(data.bankBalance - (totalAcumuladoIngresos - totalAcumuladoEgresos))}</td>
-              <td></td>
-            </tr>
-            <tr>
-              <td style={{ paddingLeft: '10px' }}>(+) Ventas del Periodo</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
-              <td></td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
-              <td></td>
-            </tr>
-            <tr>
-              <td style={{ paddingLeft: '10px' }}>(-) Compras y Gastos</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
-              <td></td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
-              <td></td>
-            </tr>
-            <tr style={{ fontWeight: 'bold', borderTop: '1px solid black', backgroundColor: '#f0f4f8' }}>
-              <td style={{ paddingLeft: '10px', padding: '10px 0' }}>Saldo Final Actual (Bancos)</td>
-              <td style={{ textAlign: 'right' }}>{fmt(data.bankBalance)}</td>
-              <td></td>
-              <td style={{ textAlign: 'right' }}>{fmt(data.bankBalance)}</td>
-              <td></td>
-            </tr>
           </tbody>
         </table>
         
         <div style={{ marginTop: '50px', textAlign: 'right' }}>
            <button className="button button--secondary" onClick={() => window.print()} style={{ marginRight: '10px' }}>🖨️ Imprimir Reporte</button>
-           <button className="button button--primary">Descargar PDF</button>
         </div>
       </div>
 
-      {/* Nuevo Desglose Detallado */}
+      {/* 4. Desglose Detallado */}
       <div style={{ marginTop: '40px' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px' }}>Desglose Detallado del Periodo</h3>
+        <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px' }}>Desglose Detallado ({rangeLabels[range]})</h3>
         
         <div className="dashboard__grid">
           <div className="card" style={{ gridColumn: 'span 6' }}>
-            <div className="card__header"><h4 className="card__title">Ventas (Ingresos)</h4></div>
+            <div className="card__header"><h4 className="card__title">Ingresos (Ventas)</h4></div>
             <div className="card__body">
               <div className="list">
                 {periodoSales.map((s: any) => (
@@ -266,13 +223,13 @@ export default function EstadoResultadosPage() {
                     <div style={{ color: '#27ae60', fontWeight: 'bold' }}>+{fmt(s.amount)}</div>
                   </div>
                 ))}
-                {periodoSales.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No hay ventas en este periodo.</p>}
+                {periodoSales.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No hay movimientos en este rango.</p>}
               </div>
             </div>
           </div>
 
           <div className="card" style={{ gridColumn: 'span 6' }}>
-            <div className="card__header"><h4 className="card__title">Gastos (Egresos)</h4></div>
+            <div className="card__header"><h4 className="card__title">Egresos (Gastos)</h4></div>
             <div className="card__body">
               <div className="list">
                 {periodoExpenses.map((e: any) => (
@@ -284,7 +241,7 @@ export default function EstadoResultadosPage() {
                     <div style={{ color: '#c0392b', fontWeight: 'bold' }}>-{fmt(e.amount)}</div>
                   </div>
                 ))}
-                {periodoExpenses.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No hay gastos en este periodo.</p>}
+                {periodoExpenses.length === 0 && <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No hay movimientos en este rango.</p>}
               </div>
             </div>
           </div>
