@@ -82,7 +82,7 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   }
 
   // ── 2. FALLBACK: BÚSQUEDA POR TEXTO (Para PDFs pegados o XMLs mal formados) ──
-  const folioPattern = /(?:factura|invoice|folio|no\.?|numero|n[úu]m(?:ero)?|serie\s*y\s*folio)[\s:#-]*([A-Z0-9-]+)/i;
+  const folioPattern = /(?:factura|invoice|folio|no\.?|numero|n[úu]m(?:ero)?|serie\s*y\s*folio|ref)[\s:#-]*([A-Z0-9]{4,25})/i;
   const issuerPattern = /(?:emisor|proveedor|razon\s*social(?:\s*emisor)?|razon\s*social:|nombre\s*emisor|nombre\s*del\s*emisor|expedido\s*por)[\s:#-]*([^\r\n]+)/i;
   const receiverPattern = /(?:receptor|cliente|razon\s*social(?:\s*receptor)?|nombre\s*receptor|nombre\s*del\s*receptor|facturado\s*a)[\s:#-]*([^\r\n]+)/i;
   
@@ -124,15 +124,20 @@ export function parseInvoiceText(text: string): ParsedInvoice {
     }
   }
 
-  // Fallback para Folio: Buscar UUID si no hay folio corto
-  if (!folio) {
-    const uuidMatch = normalizedText.match(/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/i);
-    if (uuidMatch) folio = uuidMatch[0].slice(-12); // Tomar los últimos 12 del UUID
-    else folio = 'SIN-FOLIO';
+  // Fallback para Folio: Buscar UUID o buscar cerca de la palabra FOLIO si falló el patrón
+  if (!folio || folio === 'SIN-FOLIO') {
+    const specificFolioMatch = normalizedText.match(/FOLIO[\s:#-]*([A-Z0-9]{5,25})/i);
+    if (specificFolioMatch) {
+      folio = specificFolioMatch[1].trim();
+    } else {
+      const uuidMatch = normalizedText.match(/[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/i);
+      if (uuidMatch) folio = uuidMatch[0].slice(-12); // Tomar los últimos 12 del UUID
+      else folio = 'SIN-FOLIO';
+    }
   }
 
   // Limpieza final de issuer para quitar ruidos comunes
-  issuer = issuer.replace(/(?:RFC|TEL|DOMICILIO|PAGINA|WWW|EMAIL).*/i, '').trim();
+  issuer = issuer.replace(/(?:RFC|TEL|DOMICILIO|PAGINA|WWW|EMAIL|FOLIO|EMISOR|RECEPTOR).*/i, '').trim();
 
   let parsedDate = new Date().toISOString().slice(0, 16); // YYYY-MM-DDThh:mm
   if (dateMatch) {
