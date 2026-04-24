@@ -160,6 +160,7 @@ app.post('/api/invoices', async (request, response) => {
         type: body.type, // 'SALE' o 'EXPENSE'
         providerName: isExpense ? body.provider : null,
         customerName: !isExpense ? body.customer : null,
+        paymentMethod: body.paymentMethod || null,
         status: body.status || 'confirmado',
         pdfData: body.pdfData || null
       }
@@ -179,7 +180,13 @@ app.post('/api/invoices', async (request, response) => {
       });
     }
 
-    response.status(201).json(newItem);
+    const mappedItem = {
+      ...newItem,
+      provider: newItem.providerName,
+      customer: newItem.customerName
+    };
+
+    response.status(201).json(mappedItem);
   } catch (error) {
     console.error(error);
     response.status(500).json({ error: 'Error al guardar la factura' });
@@ -225,6 +232,37 @@ app.get('/api/invoices/:id/pdf', async (request, response) => {
   } catch (error) {
     console.error('Error al obtener PDF:', error);
     response.status(500).json({ error: 'Error al obtener PDF' });
+  }
+});
+
+app.delete('/api/invoices/:id', async (request, response) => {
+  try {
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: request.params.id }
+    });
+    if (!invoice) return response.status(404).json({ error: 'Factura no encontrada' });
+
+    await prisma.invoice.delete({
+      where: { id: request.params.id }
+    });
+
+    // Revertir el saldo
+    if (invoice.type === 'EXPENSE') {
+      await prisma.globalSettings.update({
+        where: { id: 'global' },
+        data: { bankBalance: { increment: invoice.amount } }
+      });
+    } else {
+      await prisma.globalSettings.update({
+        where: { id: 'global' },
+        data: { bankBalance: { decrement: invoice.amount } }
+      });
+    }
+
+    response.json({ ok: true });
+  } catch (error) {
+    console.error('Error al eliminar factura:', error);
+    response.status(500).json({ error: 'Error al eliminar factura' });
   }
 });
 

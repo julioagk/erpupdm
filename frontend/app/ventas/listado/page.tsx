@@ -28,18 +28,26 @@ export default function SalesListPage() {
   }, []);
 
   const salesColumns = [
-    { key: 'customer', label: 'Cliente', width: '22%' },
-    { key: 'invoiceNumber', label: 'Folio', width: '12%' },
-    { key: 'date', label: 'Fecha', width: '12%' },
-    { key: 'paymentMethod', label: 'Método Pago', width: '25%' },
-    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '12%' },
-    { 
-      key: 'status', 
-      label: 'Estado', 
-      render: (v: string) => <span className="badge badge--success">{v}</span>,
-      width: '12%'
-    }
+    { key: 'customer', label: 'Cliente', width: '25%' },
+    { key: 'invoiceNumber', label: 'Folio', width: '15%' },
+    { key: 'date', label: 'Fecha', width: '15%' },
+    { key: 'paymentMethod', label: 'Método Pago', width: '30%' },
+    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '15%' }
   ];
+
+  async function handleDelete(item: SalesInvoice) {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta venta?')) return;
+    try {
+      await fetchFromApi(`/api/invoices/${item.id}`, { method: 'DELETE' });
+      setSales(prev => prev.filter(i => i.id !== item.id));
+    } catch (e) {
+      alert('Error al eliminar la factura');
+    }
+  }
+
+  function handleEdit(item: SalesInvoice) {
+    alert('Función de edición en construcción. Próximamente podrás editar ' + item.invoiceNumber);
+  }
 
   async function handleConfirmNew(parsed: any) {
     try {
@@ -106,6 +114,8 @@ export default function SalesListPage() {
           addButtonLabel="+ Registrar Venta"
           onAddNew={() => setAddModalOpen(true)}
           onViewPdf={handleViewPdf}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </section>
 
