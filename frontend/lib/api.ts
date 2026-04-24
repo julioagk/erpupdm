@@ -1,4 +1,14 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const getApiUrl = () => {
+  let url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  url = url.trim();
+  if (url && !url.startsWith('http')) {
+    url = `https://${url}`;
+  }
+  // Eliminar barra final si existe para evitar dobles barras en concatenación
+  return url.replace(/\/$/, '');
+};
+
+export const API_URL = getApiUrl();
 
 export async function fetchFromApi(endpoint: string, options: RequestInit = {}) {
   const response = await fetch(`${API_URL}${endpoint}`, {
