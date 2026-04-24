@@ -202,9 +202,9 @@ export function money(value: number) {
   }).format(value);
 }
 
-export function filterByRange<T extends { date: string }>(items: T[], range: 'day' | 'week' | 'month') {
+export function filterByRange<T extends { date: string }>(items: T[], range: 'day' | 'week' | 'month' | 'year') {
   const currentDate = new Date('2026-04-23T12:00:00Z');
-  const dayWindow = range === 'day' ? 1 : range === 'week' ? 7 : 30;
+  const dayWindow = range === 'day' ? 1 : range === 'week' ? 7 : range === 'month' ? 30 : 365;
   const threshold = currentDate.getTime() - dayWindow * 24 * 60 * 60 * 1000;
 
   return items.filter((item) => new Date(`${item.date}T12:00:00Z`).getTime() >= threshold);
@@ -265,11 +265,11 @@ export function accountingReportRows(range: 'day' | 'week' | 'month') {
   };
 }
 
-export function buildUpdmReport(range: 'day' | 'week' | 'month') {
+export function buildUpdmReport(range: 'day' | 'week' | 'month' | 'year') {
   const periodSales = filterByRange(salesInvoices, range);
   const periodExpenses = filterByRange(expenseInvoices, range);
   
-  const accumSales = salesInvoices; // All time for now
+  const accumSales = salesInvoices; // All time
   const accumExpenses = expenseInvoices;
 
   const totalPeriodSales = sumAmounts(periodSales);
@@ -293,6 +293,7 @@ export function buildUpdmReport(range: 'day' | 'week' | 'month') {
   const reportRows = categories.map(cat => {
     const periodVal = sumAmounts(periodExpenses.filter(e => e.category === cat));
     const accumVal = sumAmounts(accumExpenses.filter(e => e.category === cat));
+    const invoices = periodExpenses.filter(e => e.category === cat);
     
     return {
       label: cat,
@@ -300,7 +301,8 @@ export function buildUpdmReport(range: 'day' | 'week' | 'month') {
       periodPct: totalPeriodSales > 0 ? (periodVal / totalPeriodSales) * 100 : 0,
       accum: accumVal,
       accumPct: totalAccumSales > 0 ? (accumVal / totalAccumSales) * 100 : 0,
-      group: cat === 'Servicios y Materiales Indirectos' ? 'COSTO DE VENTAS' : 'GASTOS DE VENTA Y ADMINISTRACION'
+      group: cat === 'Servicios y Materiales Indirectos' ? 'COSTO DE VENTAS' : 'GASTOS DE VENTA Y ADMINISTRACION',
+      invoices // desglose individual
     };
   });
 
@@ -315,12 +317,14 @@ export function buildUpdmReport(range: 'day' | 'week' | 'month') {
       expenses: sumAmounts(accumExpenses),
       utility: totalAccumSales - sumAmounts(accumExpenses)
     },
-    rows: reportRows
+    rows: reportRows,
+    periodSales,     // desglose individual de ingresos
+    periodExpenses   // desglose individual de egresos
   };
 }
 
-export function buildAIInsight(range: string) {
-  const report = buildUpdmReport(range as any);
+export function buildAIInsight(range: 'day' | 'week' | 'month' | 'year') {
+  const report = buildUpdmReport(range);
   const utility = report.period.utility;
   const margin = report.period.sales > 0 ? (utility / report.period.sales) * 100 : 0;
 

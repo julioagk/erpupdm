@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useState, useRef, useEffect } from 'react';
 import { dashboardSeed, money } from '@/lib/data';
 
 const navigation = [
@@ -47,13 +50,35 @@ export function WorkspaceShell({
   eyebrow: string;
   children: React.ReactNode;
 }>) {
-  const isActiveNavItem = (href: string, matchPrefix: string) => {
-    if (matchPrefix === '/dashboard') {
-      return active === '/dashboard';
-    }
+  const [balance, setBalance] = useState(dashboardSeed.bankBalance);
+  const [editing, setEditing] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  const isActiveNavItem = (href: string, matchPrefix: string) => {
+    if (matchPrefix === '/dashboard') return active === '/dashboard';
     return active === href || active === matchPrefix || active.startsWith(`${matchPrefix}/`);
   };
+
+  function startEdit() {
+    setInputValue(String(balance));
+    setEditing(true);
+  }
+
+  function commitEdit() {
+    const parsed = parseFloat(inputValue.replace(/[^0-9.]/g, ''));
+    if (!isNaN(parsed) && parsed >= 0) setBalance(parsed);
+    setEditing(false);
+  }
+
+  function handleKey(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') commitEdit();
+    if (e.key === 'Escape') setEditing(false);
+  }
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
 
   return (
     <div className="shell">
@@ -92,10 +117,30 @@ export function WorkspaceShell({
             ))}
           </nav>
 
-          {/* Saldo en banco — siempre visible */}
+          {/* Saldo en banco — editable */}
           <div className="shell__balanceWidget">
             <p className="shell__balanceLabel">Saldo Banorte</p>
-            <strong className="shell__balanceAmount">{money(dashboardSeed.bankBalance)}</strong>
+            {editing ? (
+              <input
+                ref={inputRef}
+                className="shell__balanceInput"
+                type="number"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onBlur={commitEdit}
+                onKeyDown={handleKey}
+                placeholder="0"
+              />
+            ) : (
+              <button
+                className="shell__balanceBtn"
+                onClick={startEdit}
+                title="Clic para editar saldo"
+              >
+                <strong className="shell__balanceAmount">{money(balance)}</strong>
+                <span className="shell__balanceEdit">✎</span>
+              </button>
+            )}
           </div>
 
         </div>

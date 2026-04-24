@@ -316,6 +316,44 @@ select {
   font-family: var(--font-display), sans-serif;
 }
 
+.shell__balanceBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 8px;
+  width: 100%;
+  transition: background 150ms ease;
+}
+
+.shell__balanceBtn:hover {
+  background: rgba(139, 195, 74, 0.15);
+}
+
+.shell__balanceEdit {
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.shell__balanceInput {
+  width: 100%;
+  border: 1.5px solid var(--primary);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: var(--font-display), sans-serif;
+  text-align: center;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+
 .shell__footerNav {
   display: grid;
   gap: 10px;

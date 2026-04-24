@@ -23,6 +23,7 @@ export default function CargarVentasPage() {
           parseButtonLabel="Registrar factura"
           clearButtonLabel="Limpiar contenido"
           parsedLabel="Factura de venta registrada correctamente."
+          showCategorySelector={false}
         />
 
         <div className="card">

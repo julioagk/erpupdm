@@ -60,6 +60,7 @@ export default function ListadoVentasPage() {
           parseButtonLabel="Registrar factura"
           clearButtonLabel="Limpiar contenido"
           parsedLabel="Factura de venta procesada correctamente."
+          showCategorySelector={false}
         />
       </Modal>
     </WorkspaceShell>
