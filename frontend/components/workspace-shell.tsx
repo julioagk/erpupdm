@@ -70,11 +70,6 @@ export function WorkspaceShell({
     if (savedName) setUserName(savedName);
   }, []);
 
-  function handleLogout() {
-    document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    router.push('/login');
-  }
-
   const isActiveNavItem = (href: string, matchPrefix: string) => {
     if (matchPrefix === '/dashboard') return active === '/dashboard';
     return active === href || active === matchPrefix || active.startsWith(`${matchPrefix}/`);
@@ -117,15 +112,7 @@ export function WorkspaceShell({
             <div className="shell__userAvatar">{userName.substring(0, 2).toUpperCase()}</div>
             <div className="shell__userInfo">
               <strong>Hola, {userName}</strong>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span>Administrador</span>
-                <button 
-                  onClick={handleLogout}
-                  style={{ background: 'none', border: 'none', color: '#c0392b', fontSize: '0.75rem', cursor: 'pointer', padding: 0, fontWeight: 700 }}
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
+              <span>Administrador</span>
             </div>
           </div>
 

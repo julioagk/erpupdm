@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { WorkspaceShell } from '@/components/workspace-shell';
 
 export default function ConfiguracionPage() {
   const [name, setName] = useState('Julio');
   const [email, setEmail] = useState('admin@updm.mx');
   const [isSaved, setIsSaved] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const savedName = localStorage.getItem('erp_user_name');
@@ -18,7 +20,11 @@ export default function ConfiguracionPage() {
     localStorage.setItem('erp_user_name', name);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
-    // En una app real, aquí enviaríamos el cambio al backend (Prisma)
+  };
+
+  const handleLogout = () => {
+    document.cookie = "isLoggedIn=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    router.push('/login');
   };
 
   return (
@@ -69,10 +75,19 @@ export default function ConfiguracionPage() {
           </form>
         </div>
 
-        <div className="card" style={{ maxWidth: '600px', borderLeft: '4px solid var(--primary)' }}>
-          <div className="card__body">
-            <h3 className="card__title">Seguridad</h3>
-            <p className="card__label">Tu sesión expira automáticamente cada 24 horas para garantizar la seguridad de tus datos financieros.</p>
+        <div className="card" style={{ maxWidth: '600px', borderLeft: '4px solid #c0392b' }}>
+          <div className="card__header">
+            <h3 className="card__title" style={{ color: '#c0392b' }}>Zona de Seguridad</h3>
+          </div>
+          <div className="card__body stack">
+            <p className="card__label">Si has terminado de trabajar, te recomendamos cerrar sesión para proteger la integridad de tus datos financieros.</p>
+            <button 
+              className="button" 
+              style={{ background: '#c0392b', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, width: 'fit-content' }}
+              onClick={handleLogout}
+            >
+              🔒 Cerrar Sesión de Forma Segura
+            </button>
           </div>
         </div>
       </section>
