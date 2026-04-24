@@ -213,13 +213,21 @@ app.post('/api/extract-pdf', upload.single('file'), async (request, response) =>
 
     console.log('Tipo de pdf:', typeof pdf);
     
-    let pdfFunc = pdf;
-    if (typeof pdf !== 'function' && pdf && typeof pdf.default === 'function') {
-      pdfFunc = pdf.default;
+    let pdfFunc: any = pdf;
+    if (typeof pdfFunc !== 'function') {
+      // Intentar varias formas comunes en que los empaquetadores envuelven CJS
+      pdfFunc = pdf.default || pdf;
+      if (typeof pdfFunc !== 'function') {
+        // Buscar cualquier función exportada en el objeto
+        const foundFunc = Object.values(pdf).find(v => typeof v === 'function');
+        if (foundFunc) {
+          pdfFunc = foundFunc;
+        }
+      }
     }
 
     if (typeof pdfFunc !== 'function') {
-      throw new Error(`pdf-parse no cargó una función válida. Tipo detectado: ${typeof pdfFunc}`);
+      throw new Error(`pdf-parse no cargó una función válida. Llaves detectadas: ${Object.keys(pdf).join(', ')}`);
     }
 
     const data = await pdfFunc(request.file.buffer);
