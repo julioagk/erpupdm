@@ -1,24 +1,15 @@
 'use client';
 
-import { useState, type DragEvent } from 'react';
+import { useState, type DragEvent, useEffect } from 'react';
 import { parseInvoiceText, type ParsedInvoice } from '@/lib/parse-invoice';
 
-type EditableInvoice = ParsedInvoice & { expenseType: string };
+type EditableInvoice = ParsedInvoice;
 
 export function InvoiceUploader({
   title,
   description,
   actionLabel,
   accent,
-  fieldLabel = 'Contenido XML / PDF',
-  fieldPlaceholder = 'Pega aqui el XML o el texto extraido del PDF para llenar emisor, folio, subtotal, IVA y total',
-  uploadHint = 'Arrastra un XML o PDF, o pega el contenido para autollenar la compra.',
-  fileNote = 'Archivo cargado correctamente.',
-  unsupportedFileNote = 'Si es PDF escaneado, conecta OCR en backend. XML y texto se leen de inmediato.',
-  parseButtonLabel = 'Autollenar',
-  clearButtonLabel = 'Limpiar',
-  parsedLabel = 'Datos detectados. Revisa y corrige si es necesario antes de confirmar.',
-  expenseTypeLabel = 'Tipo de gasto',
   expenseTypeOptions = [
     'Mensajería',
     'Gastos de Administración',
@@ -30,7 +21,8 @@ export function InvoiceUploader({
     'Otros Impuestos y Derechos',
     'Suscripciones y Cuotas',
     'Comisiones Bancarias',
-    'Partidas No Deducibles'
+    'Partidas No Deducibles',
+    'Servicios y Materiales Indirectos'
   ],
   showCategorySelector = true,
   onParsed
@@ -39,24 +31,13 @@ export function InvoiceUploader({
   description: string;
   actionLabel: string;
   accent: string;
-  fieldLabel?: string;
-  fieldPlaceholder?: string;
-  uploadHint?: string;
-  fileNote?: string;
-  unsupportedFileNote?: string;
-  parseButtonLabel?: string;
-  clearButtonLabel?: string;
-  parsedLabel?: string;
-  expenseTypeLabel?: string;
   expenseTypeOptions?: string[];
   showCategorySelector?: boolean;
   onParsed?: (invoice: EditableInvoice) => void;
 }>) {
   const [text, setText] = useState('');
-  const [message, setMessage] = useState(uploadHint);
+  const [message, setMessage] = useState('Arrastra un XML aquí para autollenar.');
   const [isDragging, setIsDragging] = useState(false);
-
-  // Editable fields state — null means form not yet shown
   const [fields, setFields] = useState<EditableInvoice | null>(null);
 
   function setField<K extends keyof EditableInvoice>(key: K, value: EditableInvoice[K]) {
@@ -65,45 +46,46 @@ export function InvoiceUploader({
 
   async function handleFile(file: File | null) {
     if (!file) return;
-    const isReadableText =
-      file.type.startsWith('text/') ||
-      file.name.endsWith('.txt') ||
-      file.name.endsWith('.xml') ||
-      file.type.includes('xml');
-
-    if (isReadableText) {
+    
+    setMessage(`Leyendo ${file.name}...`);
+    
+    try {
       const content = await file.text();
       setText(content);
-      setMessage(`${file.name} cargado. ${fileNote}`);
-      return;
+      
+      // Auto-procesar después de cargar el archivo
+      const parsed = parseInvoiceText(content);
+      setFields(parsed);
+      setMessage('✅ Datos extraídos. Por favor revisa y confirma.');
+    } catch (error) {
+      setMessage('❌ Error al leer el archivo. Intenta pegar el texto manualmente.');
     }
-    setMessage(`${file.name} recibido. ${unsupportedFileNote}`);
   }
 
   function handleParse() {
+    if (!text.trim()) {
+      setMessage('⚠️ Pega contenido antes de autollenar.');
+      return;
+    }
     const parsed = parseInvoiceText(text);
-    const initial: EditableInvoice = { ...parsed, expenseType: parsed.expenseType };
-    setFields(initial);
-    setMessage(parsedLabel);
+    setFields(parsed);
+    setMessage('✅ Datos extraídos del texto pegado.');
   }
 
   function handleConfirm() {
     if (fields) {
       onParsed?.(fields);
-      setMessage('✅ Factura confirmada y registrada.');
+      setFields(null);
+      setText('');
+      setMessage('✅ Factura registrada con éxito.');
     }
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setIsDragging(false);
-    handleFile(event.dataTransfer.files?.[0] ?? null);
-  }
-
-  function handleReset() {
-    setText('');
-    setFields(null);
-    setMessage(uploadHint);
+    const file = event.dataTransfer.files?.[0];
+    if (file) handleFile(file);
   }
 
   return (
@@ -119,183 +101,103 @@ export function InvoiceUploader({
       </div>
 
       <div className="card__body stack">
-
-        {/* ── Paso 1: XML / Archivo ── */}
         {!fields && (
           <>
-            {showCategorySelector && (
-              <label className="form__row">
-                <span className="form__label">{expenseTypeLabel}</span>
-                <select
-                  className="form__select"
-                  onChange={(e) => {/* will be set on parse */}}
-                >
-                  {expenseTypeOptions.map((option) => (
-                    <option key={option} value={option}>{option}</option>
-                  ))}
-                </select>
-              </label>
-            )}
-
             <div
               className={`invoice-dropzone ${isDragging ? 'invoice-dropzone--active' : ''}`}
-              onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
+              style={{
+                border: '2px dashed #ccc',
+                borderRadius: '16px',
+                padding: '40px',
+                textAlign: 'center',
+                backgroundColor: isDragging ? '#f0f9f0' : 'transparent',
+                transition: 'all 0.3s ease'
+              }}
             >
-              <span className="invoice-dropzone__title">Arrastra aquí XML o PDF</span>
-              <span className="invoice-dropzone__hint">El sistema completará emisor, folio, subtotal, IVA y total.</span>
+              <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📄</div>
+              <strong style={{ display: 'block', fontSize: '1.1rem' }}>Suelta tu XML aquí</strong>
+              <p style={{ fontSize: '0.9rem', color: '#666' }}>El sistema extraerá los datos automáticamente</p>
             </div>
 
-            <label className="form__row">
-              <span className="form__label">{fieldLabel}</span>
+            <div className="form__row" style={{ marginTop: '20px' }}>
+              <span className="form__label">O pega el texto del XML/PDF aquí:</span>
               <textarea
                 className="form__textarea"
                 value={text}
-                onChange={(event) => setText(event.target.value)}
-                placeholder={fieldPlaceholder}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Pega aquí el contenido..."
+                style={{ minHeight: '100px' }}
               />
-            </label>
-
-            <label className="form__row">
-              <span className="form__label">Archivo</span>
-              <input
-                className="form__input"
-                type="file"
-                accept=".xml,.pdf,.txt"
-                onChange={(event) => handleFile(event.target.files?.[0] ?? null)}
-              />
-            </label>
+            </div>
 
             <div className="form__actions">
               <button className="button button--primary" type="button" onClick={handleParse}>
-                {parseButtonLabel}
+                Autollenar desde texto
               </button>
-              <button className="button button--secondary" type="button" onClick={() => setText('')}>
-                {clearButtonLabel}
-              </button>
+              <label className="button button--secondary" style={{ cursor: 'pointer' }}>
+                Seleccionar archivo
+                <input
+                  type="file"
+                  hidden
+                  onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+                />
+              </label>
             </div>
 
-            <p className="footer-note">{message}</p>
+            <p className="footer-note" style={{ textAlign: 'center', fontWeight: 'bold' }}>{message}</p>
           </>
         )}
 
-        {/* ── Paso 2: Campos editables prellenados ── */}
         {fields && (
-          <div className="uploader-review">
-            <div className="uploader-review__banner">
-              <span>✏️ Revisa los datos detectados. Corrige lo que sea necesario antes de confirmar.</span>
-              <button className="button button--secondary" style={{ fontSize: '0.78rem', padding: '4px 10px' }} type="button" onClick={handleReset}>
-                ← Volver
-              </button>
-            </div>
-
-            <div className="uploader-review__grid">
+          <div className="uploader-review" style={{ animation: 'fadeIn 0.4s ease' }}>
+            <div className="uploader-review__grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <label className="form__row">
-                <span className="form__label">Emisor / Proveedor</span>
-                <input
-                  className="form__input"
-                  value={fields.issuer}
-                  onChange={e => setField('issuer', e.target.value)}
-                />
+                <span className="form__label">Emisor (Proveedor)</span>
+                <input className="form__input" value={fields.issuer} onChange={e => setField('issuer', e.target.value)} />
               </label>
-
               <label className="form__row">
-                <span className="form__label">Receptor / Cliente</span>
-                <input
-                  className="form__input"
-                  value={fields.receiver}
-                  onChange={e => setField('receiver', e.target.value)}
-                />
+                <span className="form__label">Receptor (Cliente)</span>
+                <input className="form__input" value={fields.receiver} onChange={e => setField('receiver', e.target.value)} />
               </label>
-
               <label className="form__row">
-                <span className="form__label">Folio / No. Factura</span>
-                <input
-                  className="form__input"
-                  value={fields.folio}
-                  onChange={e => setField('folio', e.target.value)}
-                />
+                <span className="form__label">Folio / UUID</span>
+                <input className="form__input" value={fields.folio} onChange={e => setField('folio', e.target.value)} />
               </label>
-
               <label className="form__row">
                 <span className="form__label">Fecha</span>
-                <input
-                  className="form__input"
-                  type="date"
-                  value={fields.date}
-                  onChange={e => setField('date', e.target.value)}
-                />
+                <input className="form__input" type="date" value={fields.date} onChange={e => setField('date', e.target.value)} />
               </label>
-
-              <label className="form__row">
-                <span className="form__label">Método de Pago</span>
-                <input
-                  className="form__input"
-                  value={fields.paymentMethod}
-                  onChange={e => setField('paymentMethod', e.target.value)}
-                />
-              </label>
-
+              
               {showCategorySelector && (
-                <label className="form__row">
-                  <span className="form__label">{expenseTypeLabel}</span>
-                  <select
-                    className="form__select"
-                    value={fields.expenseType}
-                    onChange={e => setField('expenseType', e.target.value)}
-                  >
-                    {expenseTypeOptions.map(option => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
+                <label className="form__row" style={{ gridColumn: 'span 2' }}>
+                  <span className="form__label">Categoría de Gasto</span>
+                  <select className="form__select" value={fields.expenseType} onChange={e => setField('expenseType', e.target.value)}>
+                    {expenseTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </label>
               )}
 
               <label className="form__row">
                 <span className="form__label">Subtotal</span>
-                <input
-                  className="form__input"
-                  type="number"
-                  step="0.01"
-                  value={fields.subtotal}
-                  onChange={e => setField('subtotal', parseFloat(e.target.value) || 0)}
-                />
+                <input className="form__input" type="number" value={fields.subtotal} onChange={e => setField('subtotal', parseFloat(e.target.value) || 0)} />
               </label>
-
-              <label className="form__row">
-                <span className="form__label">IVA</span>
-                <input
-                  className="form__input"
-                  type="number"
-                  step="0.01"
-                  value={fields.iva}
-                  onChange={e => setField('iva', parseFloat(e.target.value) || 0)}
-                />
-              </label>
-
               <label className="form__row">
                 <span className="form__label">Total</span>
-                <input
-                  className="form__input"
-                  type="number"
-                  step="0.01"
-                  value={fields.total}
-                  onChange={e => setField('total', parseFloat(e.target.value) || 0)}
-                />
+                <input className="form__input" type="number" value={fields.total} onChange={e => setField('total', parseFloat(e.target.value) || 0)} />
               </label>
             </div>
 
-            <div className="form__actions" style={{ marginTop: '8px' }}>
-              <button className="button button--primary" type="button" onClick={handleConfirm}>
-                ✅ Confirmar y registrar
+            <div className="form__actions" style={{ marginTop: '20px' }}>
+              <button className="button button--primary" style={{ width: '100%' }} type="button" onClick={handleConfirm}>
+                ✅ Todo correcto, registrar
               </button>
-              <button className="button button--secondary" type="button" onClick={handleReset}>
+              <button className="button button--secondary" style={{ width: '100%' }} type="button" onClick={() => setFields(null)}>
                 Cancelar
               </button>
             </div>
-
-            <p className="footer-note">{message}</p>
           </div>
         )}
       </div>
