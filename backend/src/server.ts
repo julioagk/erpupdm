@@ -121,8 +121,13 @@ app.get('/api/providers', async (_request, response) => {
 });
 
 app.get('/api/expenses', async (_request, response) => {
-  const items = await prisma.invoice.findMany({ where: { type: 'EXPENSE' } });
-  response.json({ items: items.map(i => ({ ...i, provider: i.providerName })) });
+  try {
+    const items = await prisma.invoice.findMany({ where: { type: 'EXPENSE' } });
+    response.json({ items: items.map(i => ({ ...i, provider: i.providerName })) });
+  } catch (error) {
+    console.error('Error al obtener gastos:', error);
+    response.status(500).json({ error: 'Error al obtener los gastos de la base de datos' });
+  }
 });
 
 app.get('/api/sales', async (_request, response) => {
