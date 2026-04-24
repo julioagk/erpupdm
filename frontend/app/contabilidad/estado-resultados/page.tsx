@@ -288,7 +288,7 @@ export default function EstadoResultadosPage() {
                 {periodoExpenses.map((e: any) => (
                   <div key={e.id} className="list__item">
                     <div className="list__meta">
-                      <strong>{e.provider}</strong>
+                      <strong>{e.issuer}</strong>
                       <span>{e.category} — {e.date.split('T')[0]}</span>
                     </div>
                     <div style={{ color: '#c0392b', fontWeight: 'bold' }}>-{fmt(e.amount)}</div>

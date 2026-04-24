@@ -12,7 +12,7 @@ export default function ProvidersPage() {
   const columns = [
     {
       key: 'name',
-      label: 'Proveedor',
+      label: 'Emisor',
       width: '25%'
     },
     {
@@ -40,23 +40,23 @@ export default function ProvidersPage() {
   return (
     <WorkspaceShell
       active="/proveedores-gastos/proveedores"
-      eyebrow="Submodulo proveedores"
-      title="Registro y gestion de proveedores"
-      subtitle="Gestiona el listado de proveedores desde un espacio dedicado y separado de gastos."
+      eyebrow="Submodulo emisores"
+      title="Registro y gestion de emisores"
+      subtitle="Gestiona el listado de emisores desde un espacio dedicado y separado de gastos."
     >
       <section className="stack">
         <div className="card">
           <div className="card__header">
             <div>
               <h3 className="card__title">Acciones rapidas</h3>
-              <p className="card__label">Usa modal para registrar proveedores sin ocupar espacio permanente.</p>
+              <p className="card__label">Usa modal para registrar emisores sin ocupar espacio permanente.</p>
             </div>
-            <span className="badge">Proveedores</span>
+            <span className="badge">Emisores</span>
           </div>
           <div className="card__body form">
             <div className="form__actions">
               <button className="button button--primary" type="button" onClick={() => setProviderModalOpen(true)}>
-                + Agregar proveedor
+                + Agregar emisor
               </button>
             </div>
             <p className="footer-note">MVP visual: conecta este formulario al backend para persistir datos.</p>
@@ -64,28 +64,28 @@ export default function ProvidersPage() {
         </div>
 
         <ListTable
-          title="Proveedores registrados"
-          description="Listado maestro de proveedores con opciones para editar o eliminar."
+          title="Emisores registrados"
+          description="Listado maestro de emisores con opciones para editar o eliminar."
           columns={columns}
           data={providers}
-          searchPlaceholder="Buscar proveedor por nombre, RFC o contacto..."
-          addButtonLabel="+ Agregar proveedor"
+          searchPlaceholder="Buscar emisor por nombre, RFC o contacto..."
+          addButtonLabel="+ Agregar emisor"
           onAddNew={() => setProviderModalOpen(true)}
           onEdit={(row) => alert(`Editar: ${row.name}`)}
           onDelete={(row) => alert(`Eliminar: ${row.name}`)}
-          onExport={() => alert('Exportar proveedores a CSV')}
+          onExport={() => alert('Exportar emisores a CSV')}
         />
       </section>
 
       <Modal
         isOpen={isProviderModalOpen}
         onClose={() => setProviderModalOpen(false)}
-        title="Nuevo proveedor"
+        title="Nuevo emisor"
         description="Completa el formulario sin salir del listado principal."
       >
         <div className="form">
           <label className="form__row">
-            <span className="form__label">Nombre del proveedor</span>
+            <span className="form__label">Nombre del emisor</span>
             <input className="form__input" type="text" placeholder="Ej: Papeleria Central" />
           </label>
           <label className="form__row">
@@ -98,15 +98,15 @@ export default function ProvidersPage() {
           </label>
           <label className="form__row">
             <span className="form__label">Correo de contacto</span>
-            <input className="form__input" type="email" placeholder="compras@proveedor.com" />
+            <input className="form__input" type="email" placeholder="compras@emisor.com" />
           </label>
           <div className="form__actions">
-            <button className="button button--primary" type="button">Guardar proveedor</button>
+            <button className="button button--primary" type="button">Guardar emisor</button>
             <button className="button button--secondary" type="button" onClick={() => setProviderModalOpen(false)}>
               Cancelar
             </button>
           </div>
-          <p className="footer-note">MVP visual: conecta este formulario al backend para persistir proveedores.</p>
+          <p className="footer-note">MVP visual: conecta este formulario al backend para persistir emisores.</p>
         </div>
       </Modal>
 

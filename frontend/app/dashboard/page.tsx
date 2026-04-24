@@ -127,7 +127,7 @@ export default function DashboardPage() {
                   <div className="dashboard__pdfRows">
                     {expenses.slice(0, 4).map((expense: any) => (
                       <div key={expense.id} className="dashboard__pdfRow">
-                        <span>{expense.provider}</span>
+                        <span>{expense.issuer}</span>
                         <strong>{money(expense.amount)}</strong>
                       </div>
                     ))}

@@ -65,7 +65,7 @@ app.get('/api/accounting', async (request, response) => {
     const margin = salesTotal === 0 ? 0 : (net / salesTotal) * 100;
 
     const mappedSales = sales.map(s => ({ ...s, customer: s.customerName }));
-    const mappedExpenses = expenses.map(e => ({ ...e, provider: e.providerName }));
+    const mappedExpenses = expenses.map(e => ({ ...e, issuer: e.providerName }));
 
     response.json({
       range,
@@ -109,7 +109,7 @@ app.get('/api/ai/insight', async (request, response) => {
     insight = {
       status: 'estable',
       message: `La rentabilidad es positiva (${margin.toFixed(1)}%), pero el margen es ajustado.`,
-      nextActions: ['Reducir gastos de oficina', 'Negociar con proveedores']
+      nextActions: ['Reducir gastos de oficina', 'Negociar con emisores']
     };
   } else {
     insight = {
@@ -133,7 +133,7 @@ app.get('/api/expenses', async (_request, response) => {
       where: { type: 'EXPENSE' },
       select: { id: true, date: true, amount: true, subtotal: true, iva: true, category: true, source: true, invoiceNumber: true, description: true, type: true, providerId: true, providerName: true, customerName: true, paymentMethod: true, status: true, createdAt: true }
     });
-    response.json({ items: items.map(i => ({ ...i, provider: i.providerName })) });
+    response.json({ items: items.map(i => ({ ...i, issuer: i.providerName })) });
   } catch (error) {
     console.error('Error al obtener gastos:', error);
     response.status(500).json({ error: 'Error al obtener los gastos de la base de datos' });
@@ -164,7 +164,7 @@ app.post('/api/invoices', async (request, response) => {
         invoiceNumber: body.invoiceNumber,
         description: body.description || '',
         type: body.type, // 'SALE' o 'EXPENSE'
-        providerName: isExpense ? body.provider : null,
+        providerName: isExpense ? body.issuer : null,
         customerName: !isExpense ? body.customer : null,
         paymentMethod: body.paymentMethod || null,
         status: body.status || 'confirmado',
@@ -188,7 +188,7 @@ app.post('/api/invoices', async (request, response) => {
 
     const mappedItem = {
       ...newItem,
-      provider: newItem.providerName,
+      issuer: newItem.providerName,
       customer: newItem.customerName
     };
 
@@ -290,7 +290,7 @@ app.put('/api/invoices/:id', async (request, response) => {
         iva: body.iva,
         category: body.category,
         invoiceNumber: body.invoiceNumber,
-        providerName: isExpense ? body.provider : null,
+        providerName: isExpense ? body.issuer : null,
         customerName: !isExpense ? body.customer : null,
         paymentMethod: body.paymentMethod,
         description: body.description
@@ -299,7 +299,7 @@ app.put('/api/invoices/:id', async (request, response) => {
 
     const mappedItem = {
       ...updated,
-      provider: updated.providerName,
+      issuer: updated.providerName,
       customer: updated.customerName
     };
 

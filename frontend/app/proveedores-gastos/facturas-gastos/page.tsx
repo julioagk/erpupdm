@@ -44,7 +44,7 @@ export default function ExpenseInvoicesPage() {
   }, []);
 
   const expenseColumns = [
-    { key: 'provider', label: 'Emisor', width: '18%' },
+    { key: 'issuer', label: 'Emisor', width: '18%' },
     { key: 'invoiceNumber', label: 'Folio', width: '12%' },
     { key: 'date', label: 'Fecha', width: '12%' },
     { key: 'category', label: 'Categoría', width: '18%' },
@@ -92,7 +92,7 @@ export default function ExpenseInvoicesPage() {
         body: JSON.stringify({
           ...parsed,
           type: 'EXPENSE',
-          provider: parsed.issuer,
+          issuer: parsed.issuer,
           invoiceNumber: parsed.folio,
           amount: parsed.total,
           category: parsed.expenseType,
@@ -182,8 +182,8 @@ export default function ExpenseInvoicesPage() {
         {editingRow && (
           <form className="stack" onSubmit={handleSaveEdit} style={{ marginTop: '20px' }}>
             <label className="form__row">
-              <span className="form__label">Emisor (Proveedor)</span>
-              <input required className="form__input" value={editingRow.provider || ''} onChange={e => setEditingRow({...editingRow, provider: e.target.value})} />
+              <span className="form__label">Emisor</span>
+              <input required className="form__input" value={editingRow.issuer || ''} onChange={e => setEditingRow({...editingRow, issuer: e.target.value})} />
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <label className="form__row">

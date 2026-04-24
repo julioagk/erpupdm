@@ -226,7 +226,7 @@ export function InvoiceUploader({
             <div className="uploader-review" style={{ flex: '1 1 350px' }}>
                <div className="uploader-review__grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <label className="form__row">
-                  <span className="form__label">{isSale ? 'Emisor (Nosotros)' : 'Proveedor'}</span>
+                  <span className="form__label">{isSale ? 'Emisor (Nosotros)' : 'Emisor'}</span>
                   <input className="form__input" value={fields.issuer} onChange={e => setField('issuer', e.target.value)} />
                 </label>
                 <label className="form__row">

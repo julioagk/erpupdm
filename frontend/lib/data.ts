@@ -9,7 +9,7 @@ export type MoneyRecord = {
 };
 
 export type ExpenseInvoice = MoneyRecord & {
-  provider: string;
+  issuer: string;
   invoiceNumber: string;
   kind: string;
   description: string;
@@ -78,7 +78,7 @@ export const expenseInvoices: ExpenseInvoice[] = [
     iva: 1162,
     category: 'Servicios y Materiales Indirectos',
     source: 'OCR / PDF',
-    provider: 'Papeleria Central',
+    issuer: 'Papeleria Central',
     invoiceNumber: 'FAC-7842',
     kind: 'Compra',
     description: 'Compra de insumos y empaque'
@@ -91,7 +91,7 @@ export const expenseInvoices: ExpenseInvoice[] = [
     iva: 430,
     category: 'Gastos de Oficina',
     source: 'Carga manual',
-    provider: 'Energia Urbana',
+    issuer: 'Energia Urbana',
     invoiceNumber: 'E-1503',
     kind: 'Servicio',
     description: 'Consumo electrico mensual'
@@ -104,7 +104,7 @@ export const expenseInvoices: ExpenseInvoice[] = [
     iva: 302,
     category: 'Mensajería',
     source: 'OCR / imagen',
-    provider: 'Logistica Norte',
+    issuer: 'Logistica Norte',
     invoiceNumber: 'LN-2245',
     kind: 'Transporte',
     description: 'Envio de pedidos a clientes'
@@ -253,7 +253,7 @@ export function accountingReportRows(range: 'day' | 'week' | 'month') {
     type: expense.kind === 'Compra' ? 'Compra' : 'Gasto',
     date: expense.date,
     reference: expense.invoiceNumber,
-    party: expense.provider,
+    party: expense.issuer,
     category: expense.category,
     amount: expense.amount,
     note: expense.description,
@@ -339,7 +339,7 @@ export function buildAIInsight(range: 'day' | 'week' | 'month' | 'year') {
     return {
       status: 'estable',
       message: `La rentabilidad es positiva (${margin.toFixed(1)}%), pero el margen es ajustado. Se recomienda revisar los gastos de administración para liberar flujo de caja.`,
-      nextActions: ['Reducir gastos de oficina', 'Negociar con proveedores', 'Revisar comisiones']
+      nextActions: ['Reducir gastos de oficina', 'Negociar con emisores', 'Revisar comisiones']
     };
   } else {
     return {
