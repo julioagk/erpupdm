@@ -15,6 +15,7 @@ type EditableInvoice = {
   total: number;
   paymentMethod: string;
   expenseType: string;
+  pdfData?: string;
 };
 
 export function InvoiceUploader({
@@ -68,7 +69,14 @@ export function InvoiceUploader({
     try {
       let content = '';
       
+      let pdfBase64 = '';
       if (file.type === 'application/pdf') {
+        const reader = new FileReader();
+        pdfBase64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        
         // Enviar PDF al backend para extracción de texto
         const formData = new FormData();
         formData.append('file', file);
@@ -96,6 +104,10 @@ export function InvoiceUploader({
       // Importación dinámica de la lógica de parseo para evitar problemas de DOM en SSR
       const { parseInvoiceText } = await import('@/lib/parse-invoice');
       const parsed = parseInvoiceText(content);
+      
+      if (pdfBase64) {
+        parsed.pdfData = pdfBase64;
+      }
       
       if (isSale) {
         parsed.issuer = 'UPDM S.A. DE C.V.';

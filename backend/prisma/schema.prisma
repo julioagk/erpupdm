@@ -44,6 +44,7 @@ model Invoice {
   customerName  String?
   paymentMethod String?
   status        String?     // 'confirmado', 'pendiente', etc.
+  pdfData       String?     // Archivo PDF codificado en Base64
   
   createdAt     DateTime    @default(now())
 }

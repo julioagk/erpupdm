@@ -24,6 +24,7 @@ export interface ListTableProps {
   onAddNew?: () => void;
   onEdit?: (row: any) => void;
   onDelete?: (row: any) => void;
+  onViewPdf?: (row: any) => void;
   onExport?: () => void;
   searchPlaceholder?: string;
   addButtonLabel?: string;
@@ -38,6 +39,7 @@ export function ListTable({
   onAddNew,
   onEdit,
   onDelete,
+  onViewPdf,
   onExport,
   searchPlaceholder = 'Buscar...',
   addButtonLabel = 'Agregar'
@@ -122,7 +124,7 @@ export function ListTable({
                     {col.label}
                   </th>
                 ))}
-                {(onEdit || onDelete) && <th>Acciones</th>}
+                {(onEdit || onDelete || onViewPdf) && <th>Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -134,9 +136,19 @@ export function ListTable({
                         {col.render ? col.render(row[col.key], row) : row[col.key]}
                       </td>
                     ))}
-                    {(onEdit || onDelete) && (
+                    {(onEdit || onDelete || onViewPdf) && (
                       <td>
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          {onViewPdf && (
+                            <button
+                              type="button"
+                              onClick={() => onViewPdf(row)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '4px 8px' }}
+                              title="Ver PDF Original"
+                            >
+                              👁️
+                            </button>
+                          )}
                           {onEdit && (
                             <button
                               type="button"
@@ -176,7 +188,7 @@ export function ListTable({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={columns.length + ((onEdit || onDelete) ? 1 : 0)} style={{ textAlign: 'center', padding: '24px' }}>
+                  <td colSpan={columns.length + ((onEdit || onDelete || onViewPdf) ? 1 : 0)} style={{ textAlign: 'center', padding: '24px' }}>
                     <span className="card__label">No hay registros que coincidan con tu búsqueda</span>
                   </td>
                 </tr>

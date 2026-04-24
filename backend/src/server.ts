@@ -54,8 +54,9 @@ app.get('/api/accounting', async (request, response) => {
   try {
     const range = String(request.query.range || 'month');
     
-    const sales = await prisma.invoice.findMany({ where: { type: 'SALE' } });
-    const expenses = await prisma.invoice.findMany({ where: { type: 'EXPENSE' } });
+    const selectFields = { id: true, date: true, amount: true, subtotal: true, iva: true, category: true, source: true, invoiceNumber: true, description: true, type: true, providerId: true, providerName: true, customerName: true, paymentMethod: true, status: true, createdAt: true };
+    const sales = await prisma.invoice.findMany({ where: { type: 'SALE' }, select: selectFields });
+    const expenses = await prisma.invoice.findMany({ where: { type: 'EXPENSE' }, select: selectFields });
     
     const salesTotal = sales.reduce((t, i) => t + i.amount, 0);
     const expenseTotal = expenses.reduce((t, i) => t + i.amount, 0);
@@ -122,7 +123,10 @@ app.get('/api/providers', async (_request, response) => {
 
 app.get('/api/expenses', async (_request, response) => {
   try {
-    const items = await prisma.invoice.findMany({ where: { type: 'EXPENSE' } });
+    const items = await prisma.invoice.findMany({ 
+      where: { type: 'EXPENSE' },
+      select: { id: true, date: true, amount: true, subtotal: true, iva: true, category: true, source: true, invoiceNumber: true, description: true, type: true, providerId: true, providerName: true, customerName: true, paymentMethod: true, status: true, createdAt: true }
+    });
     response.json({ items: items.map(i => ({ ...i, provider: i.providerName })) });
   } catch (error) {
     console.error('Error al obtener gastos:', error);
@@ -131,7 +135,10 @@ app.get('/api/expenses', async (_request, response) => {
 });
 
 app.get('/api/sales', async (_request, response) => {
-  const items = await prisma.invoice.findMany({ where: { type: 'SALE' } });
+  const items = await prisma.invoice.findMany({ 
+    where: { type: 'SALE' },
+    select: { id: true, date: true, amount: true, subtotal: true, iva: true, category: true, source: true, invoiceNumber: true, description: true, type: true, providerId: true, providerName: true, customerName: true, paymentMethod: true, status: true, createdAt: true }
+  });
   response.json({ items: items.map(i => ({ ...i, customer: i.customerName })) });
 });
 
@@ -153,7 +160,8 @@ app.post('/api/invoices', async (request, response) => {
         type: body.type, // 'SALE' o 'EXPENSE'
         providerName: isExpense ? body.provider : null,
         customerName: !isExpense ? body.customer : null,
-        status: body.status || 'confirmado'
+        status: body.status || 'confirmado',
+        pdfData: body.pdfData || null
       }
     });
 
@@ -201,6 +209,22 @@ app.post('/api/bank/balance', async (request, response) => {
   } catch (error) {
     console.error('Error al actualizar saldo:', error);
     response.status(500).json({ error: 'Error al actualizar saldo' });
+  }
+});
+
+app.get('/api/invoices/:id/pdf', async (request, response) => {
+  try {
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: request.params.id },
+      select: { pdfData: true, invoiceNumber: true }
+    });
+    if (!invoice || !invoice.pdfData) {
+      return response.status(404).json({ error: 'PDF no encontrado o no fue guardado' });
+    }
+    response.json({ pdfData: invoice.pdfData, invoiceNumber: invoice.invoiceNumber });
+  } catch (error) {
+    console.error('Error al obtener PDF:', error);
+    response.status(500).json({ error: 'Error al obtener PDF' });
   }
 });
 

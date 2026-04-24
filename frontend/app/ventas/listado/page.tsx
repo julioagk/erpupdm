@@ -64,6 +64,23 @@ export default function SalesListPage() {
     }
   }
 
+  async function handleViewPdf(row: any) {
+    try {
+      const data = await fetchFromApi(`/api/invoices/${row.id}/pdf`);
+      if (data && data.pdfData) {
+        // Open PDF in new tab
+        const win = window.open();
+        if (win) {
+          win.document.write(`<iframe src="${data.pdfData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+        }
+      } else {
+        alert('Esta venta no tiene un PDF adjunto guardado.');
+      }
+    } catch (error) {
+      alert('Error al obtener el PDF. Es posible que no se haya guardado.');
+    }
+  }
+
   if (loading) {
     return (
       <WorkspaceShell active="/ventas/listado" eyebrow="Ventas" title="Cargando ventas..." subtitle="Sincronizando con Railway...">
@@ -88,6 +105,7 @@ export default function SalesListPage() {
           searchPlaceholder="Buscar venta por cliente o folio..."
           addButtonLabel="+ Registrar Venta"
           onAddNew={() => setAddModalOpen(true)}
+          onViewPdf={handleViewPdf}
         />
       </section>
 

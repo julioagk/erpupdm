@@ -76,6 +76,22 @@ export default function ExpenseInvoicesPage() {
     }
   }
 
+  async function handleViewPdf(row: any) {
+    try {
+      const data = await fetchFromApi(`/api/invoices/${row.id}/pdf`);
+      if (data && data.pdfData) {
+        const win = window.open();
+        if (win) {
+          win.document.write(`<iframe src="${data.pdfData}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+        }
+      } else {
+        alert('Esta factura no tiene un PDF adjunto guardado.');
+      }
+    } catch (error) {
+      alert('Error al obtener el PDF. Es posible que no se haya guardado.');
+    }
+  }
+
   if (loading) {
     return (
       <WorkspaceShell active="/proveedores-gastos/facturas-gastos" eyebrow="Compras" title="Cargando facturas..." subtitle="Conectando con Railway...">
@@ -102,6 +118,7 @@ export default function ExpenseInvoicesPage() {
           onAddNew={() => setAddModalOpen(true)}
           onEdit={(row) => setEditingRow({ ...row })}
           onDelete={(row) => setDeleteTarget(row)}
+          onViewPdf={handleViewPdf}
           onExport={() => alert('Exportar compras a CSV')}
         />
       </section>
