@@ -1,0 +1,65 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Provider {
+  id          String    @id @default(uuid())
+  name        String
+  taxId       String    @unique
+  category    String
+  contact     String?
+  lastInvoice String?
+  invoices    Invoice[]
+  createdAt   DateTime  @default(now())
+}
+
+enum InvoiceType {
+  SALE
+  EXPENSE
+}
+
+model Invoice {
+  id            String      @id @default(uuid())
+  date          String      // Formato YYYY-MM-DD
+  amount        Float
+  subtotal      Float
+  iva           Float
+  category      String
+  source        String?
+  invoiceNumber String      @unique
+  description   String?
+  type          InvoiceType
+  
+  // Para Compras
+  providerId    String?
+  provider      Provider?   @relation(fields: [providerId], references: [id])
+  providerName  String?
+
+  // Para Ventas
+  customerName  String?
+  paymentMethod String?
+  status        String?     // 'confirmado', 'pendiente', etc.
+  
+  createdAt     DateTime    @default(now())
+}
+
+model BankMovement {
+  id        String   @id @default(uuid())
+  date      String   // Formato YYYY-MM-DD
+  concept   String
+  amount    Float
+  kind      String   // 'ingreso' or 'egreso'
+  source    String
+  status    String   // 'conciliado' or 'pendiente'
+  createdAt DateTime @default(now())
+}
+
+model GlobalSettings {
+  id          String   @id @default("global")
+  bankBalance Float    @default(0)
+}
