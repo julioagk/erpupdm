@@ -47,24 +47,26 @@ export default function EstadoResultadosPage() {
     );
   }
 
-  // Lógica de Filtrado por Rango
+  // Lógica de Filtrado por Rango (Inmune a zonas horarias)
   const now = new Date();
   const filterByRange = (dateStr: string) => {
     if (!dateStr) return false;
-    const d = new Date(dateStr);
     
-    // Normalizar a fechas sin hora para comparación de "Día"
-    const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    const nDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    // Extraer YYYY, MM, DD directamente del string (ej: "2026-04-24T...")
+    const [y, m, d] = dateStr.split('T')[0].split('-').map(Number);
+    const itemTime = new Date(y, m - 1, d).getTime(); // Medianoche local del item
+    
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayTime = today.getTime();
 
     if (range === 'all') return true;
-    if (range === 'day') return dDay === nDay;
-    if (range === 'year') return d.getFullYear() === now.getFullYear();
-    if (range === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (range === 'day') return itemTime === todayTime;
+    if (range === 'year') return y === now.getFullYear();
+    if (range === 'month') return y === now.getFullYear() && (m - 1) === now.getMonth();
     if (range === 'week') {
-      const oneWeekAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      return d.getTime() >= oneWeekAgo.getTime();
+      const diff = todayTime - itemTime;
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      return diff >= 0 && diff <= sevenDaysMs;
     }
     return true;
   };
