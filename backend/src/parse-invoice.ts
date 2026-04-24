@@ -1,5 +1,5 @@
 export type ParsedInvoice = {
-  provider: string;
+  issuer: string;
   invoiceNumber: string;
   amount: number;
   date: string;
@@ -55,7 +55,7 @@ function extractInvoiceNumber(text: string) {
   return match?.[2] ?? 'SIN-REFERENCIA';
 }
 
-function extractProvider(text: string) {
+function extractIssuer(text: string) {
   const providerPattern = /(proveedor|emisor|razon social|razon social:)[\s:]*([A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ .,&-]+)/i;
   const match = text.match(providerPattern);
 
@@ -66,7 +66,7 @@ function extractProvider(text: string) {
   return text
     .split('\n')
     .map((line) => line.trim())
-    .find((line) => line.length > 4) ?? 'Proveedor no identificado';
+    .find((line) => line.length > 4) ?? 'Emisor no identificado';
 }
 
 function extractDate(text: string) {
@@ -92,7 +92,7 @@ function detectKind(text: string) {
 
 export function parseInvoiceText(text: string): ParsedInvoice {
   const normalizedText = text.replace(/\r/g, '\n');
-  const provider = extractProvider(normalizedText);
+  const issuer = extractIssuer(normalizedText);
   const invoiceNumber = extractInvoiceNumber(normalizedText);
   const amount = extractAmount(normalizedText);
   const date = extractDate(normalizedText);
@@ -103,7 +103,7 @@ export function parseInvoiceText(text: string): ParsedInvoice {
     .find((line) => line.length > 12) ?? 'Factura procesada automaticamente';
 
   return {
-    provider,
+    issuer,
     invoiceNumber,
     amount,
     date,
