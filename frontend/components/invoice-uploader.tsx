@@ -238,8 +238,13 @@ export function InvoiceUploader({
                   <input className="form__input" value={fields.folio} onChange={e => setField('folio', e.target.value)} />
                 </label>
                 <label className="form__row">
-                  <span className="form__label">Fecha</span>
-                  <input className="form__input" type="date" value={fields.date} onChange={e => setField('date', e.target.value)} />
+                  <span className="form__label">Fecha y Hora</span>
+                  <input className="form__input" type="datetime-local" value={fields.date} onChange={e => setField('date', e.target.value)} />
+                </label>
+                
+                <label className="form__row">
+                  <span className="form__label">Método de Pago</span>
+                  <input className="form__input" value={fields.paymentMethod || 'PUE - Pago en una sola exhibición'} onChange={e => setField('paymentMethod', e.target.value)} />
                 </label>
                 
                 {showCategorySelector && (

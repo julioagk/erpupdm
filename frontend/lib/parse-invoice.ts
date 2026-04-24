@@ -92,9 +92,14 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   const subtotalPattern = new RegExp(`(?:subtotal|sub-total)[\\s:#-]*${amountRegex.source}`, 'i');
   const ivaPattern = new RegExp(`(?:iva|impuesto al valor agregado|traslados)[^\\r\\n]{0,40}?${amountRegex.source}`, 'i');
 
+  const datePattern = /(?:fecha|emisi[oó]n|date)[\s:#-]*([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}|[0-9]{2}\/[0-9]{2}\/[0-9]{4}(?:\s*[0-9]{2}:[0-9]{2}:[0-9]{2})?|[0-9]{4}-[0-9]{2}-[0-9]{2}(?:\s*[0-9]{2}:[0-9]{2}:[0-9]{2})?)/i;
+  const paymentMethodPattern = /(?:m[eé]todo\s*de\s*pago|metodo\s*pago|forma\s*de\s*pago)[\s:#-]*(PUE|PPD|Pago en una sola exhibición|Pago en parcialidades)/i;
+
   const totalMatch = normalizedText.match(totalPattern);
   const subtotalMatch = normalizedText.match(subtotalPattern);
   const ivaMatch = normalizedText.match(ivaPattern);
+  const dateMatch = normalizedText.match(datePattern);
+  const paymentMatch = normalizedText.match(paymentMethodPattern);
   
   const total = totalMatch ? normalizeNumber(totalMatch[1]) : 0;
   const subtotal = subtotalMatch ? normalizeNumber(subtotalMatch[1]) : 0;
@@ -104,15 +109,37 @@ export function parseInvoiceText(text: string): ParsedInvoice {
   const issuerMatch = normalizedText.match(issuerPattern);
   const receiverMatch = normalizedText.match(receiverPattern);
   
+  let parsedDate = new Date().toISOString().slice(0, 16); // YYYY-MM-DDThh:mm
+  if (dateMatch) {
+    // Si viene como 2026-04-13T14:41:56, quitamos los segundos para datetime-local
+    let d = dateMatch[1].trim();
+    if (d.includes('T') && d.length > 16) d = d.substring(0, 16);
+    else if (d.match(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}/)) {
+       // DD/MM/YYYY
+       const parts = d.split(' ')[0].split('/');
+       d = `${parts[2]}-${parts[1]}-${parts[0]}T12:00`;
+    }
+    else if (d.length === 10) d = `${d}T12:00`; // YYYY-MM-DD -> YYYY-MM-DDThh:mm
+    parsedDate = d;
+  }
+  
+  let parsedPayment = 'PUE - Pago en una sola exhibición';
+  if (paymentMatch) {
+    const p = paymentMatch[1].toUpperCase();
+    if (p.includes('PPD') || p.includes('PARCIALIDADES')) parsedPayment = 'PPD - Pago en parcialidades o diferido';
+    else if (p.includes('PUE') || p.includes('UNA SOLA')) parsedPayment = 'PUE - Pago en una sola exhibición';
+    else parsedPayment = paymentMatch[1];
+  }
+  
   return {
     issuer: issuerMatch?.[2]?.trim() || 'Emisor no identificado',
     receiver: receiverMatch?.[2]?.trim() || 'Receptor no identificado',
     folio: folioMatch ? folioMatch[1].trim() : 'SIN-FOLIO',
-    date: new Date().toISOString().slice(0, 10),
+    date: parsedDate,
     total: total,
     subtotal: subtotal,
     iva: iva,
-    paymentMethod: 'PUE - Pago en una sola exhibición',
+    paymentMethod: parsedPayment,
     expenseType: 'Gastos de Administración'
   };
 }
