@@ -72,13 +72,13 @@ export default function AnalisisPage() {
             </div>
             <div className="card__body stack">
               <div className="chip-row">
-                <span className="chip">{insightMonth.title}</span>
+                <span className="chip">Análisis Ejecutivo</span>
                 <span className="chip">Estado: {insightMonth.status}</span>
               </div>
               <p className="footer-note">{insightMonth.message}</p>
               <div className="list">
                 <div className="list__item">
-                  <div className="list__meta"><strong>Caja:</strong> {insightMonth.highlight}</div>
+                  <div className="list__meta"><strong>IA:</strong> Análisis generado basado en el flujo de caja actual.</div>
                 </div>
               </div>
             </div>
