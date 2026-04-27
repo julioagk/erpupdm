@@ -187,93 +187,109 @@ export default function EstadoResultadosPage() {
         </article>
       </section>
 
-      {/* 4. Estado de Resultados (Tabla Moderna) */}
-      <div className="card" style={{ padding: '30px', marginBottom: '40px', background: '#fff' }}>
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h3 className="card__title" style={{ fontSize: '1.6rem', marginBottom: '5px' }}>Estado de Resultados</h3>
-          <p className="card__label">Reporte oficial generado para el periodo: <strong>{rangeLabels[range]}</strong></p>
+      {/* 4. Estado de Resultados (Tabla Formal) */}
+      <div className="card" style={{ background: 'white', color: 'black', padding: '60px', fontFamily: 'serif', maxWidth: '1200px', margin: '0 auto 40px auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', overflowX: 'auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px', borderBottom: '2px solid black', paddingBottom: '10px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0', letterSpacing: '3px' }}>UPDM</h1>
+          <h2 style={{ fontSize: '16px', fontWeight: 'normal', margin: '5px 0' }}>Estado de Resultados ({rangeLabels[range]})</h2>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '1.1rem' }}>
-            <thead>
-              <tr style={{ background: '#f8f9fa', borderBottom: '2px solid var(--line)' }}>
-                <th style={{ padding: '15px 12px', textAlign: 'left' }}>Descripción</th>
-                <th style={{ textAlign: 'right', padding: '15px 12px' }}>Periodo</th>
-                <th style={{ textAlign: 'right', padding: '15px 12px' }}>%</th>
-                <th style={{ textAlign: 'right', padding: '15px 12px' }}>Acumulado</th>
-                <th style={{ textAlign: 'right', padding: '15px 12px' }}>%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Sección Ingresos */}
-              <tr>
-                <td colSpan={5} style={{ padding: '20px 12px 10px', fontWeight: 'bold', fontSize: '1.25rem', color: '#27ae60' }}>
-                  Ingresos
-                </td>
-              </tr>
-              <tr>
-                <td style={{ paddingLeft: '24px', padding: '10px 12px' }}>Ventas Nacionales</td>
-                <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
-                <td style={{ textAlign: 'right' }}>100.00</td>
-                <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
-                <td style={{ textAlign: 'right' }}>100.00</td>
-              </tr>
-              <tr style={{ fontWeight: 'bold', background: 'rgba(39, 174, 96, 0.05)', borderBottom: '1px solid #ccc' }}>
-                <td style={{ padding: '12px' }}>Total Ingresos</td>
-                <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
-                <td style={{ textAlign: 'right' }}>100.00</td>
-                <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
-                <td style={{ textAlign: 'right' }}>100.00</td>
-              </tr>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid black' }}>
+              <th style={{ textAlign: 'left', padding: '15px 0' }}>Descripción</th>
+              <th style={{ textAlign: 'right', width: '18%' }}>Periodo</th>
+              <th style={{ textAlign: 'right', width: '10%' }}>%</th>
+              <th style={{ textAlign: 'right', width: '18%' }}>Acumulado</th>
+              <th style={{ textAlign: 'right', width: '10%' }}>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colSpan={5} style={{ padding: '20px 0 5px 0', fontWeight: 'bold', fontStyle: 'italic', fontSize: '14px' }}>Ingresos</td></tr>
+            <tr>
+              <td style={{ paddingLeft: '20px' }}>Ventas Nacionales</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+            </tr>
+            <tr style={{ fontWeight: 'bold', borderBottom: '1px solid #ccc' }}>
+              <td style={{ fontStyle: 'italic', padding: '10px 0' }}>Total Ingresos</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>100.00</td>
+            </tr>
 
-              {/* Sección Egresos */}
-              <tr>
-                <td colSpan={5} style={{ padding: '30px 12px 10px', fontWeight: 'bold', fontSize: '1.25rem', color: '#c0392b' }}>
-                  Egresos
-                </td>
-              </tr>
-              {expenseCategories.map(cat => {
-                const perTotal = getCategoryTotal(periodoExpenses, cat);
-                const acuTotal = getCategoryTotal(acumuladoExpenses, cat);
-                if (perTotal === 0 && acuTotal === 0) return null;
-                return (
-                  <tr key={cat} style={{ borderBottom: '1px solid #f1f1f1' }}>
-                    <td style={{ paddingLeft: '24px', padding: '10px 12px' }}>{cat}</td>
-                    <td style={{ textAlign: 'right' }}>{fmt(perTotal)}</td>
-                    <td style={{ textAlign: 'right' }}>{pct(perTotal, totalPeriodoIngresos)}</td>
-                    <td style={{ textAlign: 'right' }}>{fmt(acuTotal)}</td>
-                    <td style={{ textAlign: 'right' }}>{pct(acuTotal, totalAcumuladoIngresos)}</td>
-                  </tr>
-                );
-              })}
-              
-              <tr style={{ fontWeight: 'bold', background: 'rgba(192, 57, 43, 0.05)', borderBottom: '1px solid #ccc' }}>
-                <td style={{ padding: '12px' }}>Total Egresos</td>
-                <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
-                <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
-                <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
-                <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
-              </tr>
+            <tr><td colSpan={5} style={{ padding: '25px 0 5px 0', fontWeight: 'bold', fontStyle: 'italic', fontSize: '14px' }}>Egresos</td></tr>
+            
+            {/* Costo de Ventas */}
+            <tr style={{ fontWeight: 'bold' }}>
+              <td style={{ paddingLeft: '10px' }}>COSTO DE VENTAS</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
+            <tr style={{ fontWeight: 'bold', borderTop: '1px solid #ddd' }}>
+              <td style={{ paddingLeft: '20px' }}>TOTAL COSTO DE VENTAS</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>-</td>
+              <td style={{ textAlign: 'right' }}>0.00</td>
+            </tr>
 
-              {/* Utilidad Final */}
-              <tr style={{ fontWeight: 'bold', borderTop: '2px solid black', background: '#fdfdfd', fontSize: '1.3rem' }}>
-                <td style={{ padding: '20px 12px' }}>Utilidad (o Pérdida) Final</td>
-                <td style={{ textAlign: 'right', color: totalPeriodoIngresos - totalPeriodoEgresos >= 0 ? '#27ae60' : '#c0392b' }}>
-                  {fmt(totalPeriodoIngresos - totalPeriodoEgresos)}
-                </td>
-                <td style={{ textAlign: 'right' }}>{pct(totalPeriodoIngresos - totalPeriodoEgresos, totalPeriodoIngresos)}</td>
-                <td style={{ textAlign: 'right', color: totalAcumuladoIngresos - totalAcumuladoEgresos >= 0 ? '#27ae60' : '#c0392b' }}>
-                  {fmt(totalAcumuladoIngresos - totalAcumuladoEgresos)}
-                </td>
-                <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoIngresos - totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+            {/* Gastos de Venta y Administración */}
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', paddingTop: '20px' }}>GASTOS DE VENTA Y ADMINISTRACION</td></tr>
+            {expenseCategories.map(cat => {
+              const perTotal = getCategoryTotal(periodoExpenses, cat);
+              const acuTotal = getCategoryTotal(acumuladoExpenses, cat);
+              return (
+                <tr key={cat}>
+                  <td style={{ paddingLeft: '20px', padding: '4px 20px' }}>{cat}</td>
+                  <td style={{ textAlign: 'right' }}>{fmt(perTotal)}</td>
+                  <td style={{ textAlign: 'right' }}>{pct(perTotal, totalPeriodoIngresos)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmt(acuTotal)}</td>
+                  <td style={{ textAlign: 'right' }}>{pct(acuTotal, totalAcumuladoIngresos)}</td>
+                </tr>
+              );
+            })}
+            
+            <tr style={{ fontWeight: 'bold', borderTop: '1px solid black' }}>
+              <td style={{ paddingLeft: '20px', padding: '10px 0' }}>TOTAL DE GASTOS DE VENTAS Y ADMINISTRACION</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
+            </tr>
 
-        <div style={{ marginTop: '30px', textAlign: 'right' }}>
-           <button className="button button--secondary" onClick={() => window.print()} style={{ padding: '10px 20px', cursor: 'pointer' }}>🖨️ Imprimir Reporte</button>
+            {/* Secciones Adicionales */}
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', paddingTop: '15px' }}>COSTO INTEGRAL DE FINANCIAMIENTO</td></tr>
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', paddingTop: '10px' }}>OTROS INGRESOS Y GASTOS</td></tr>
+            <tr><td colSpan={5} style={{ paddingLeft: '10px', fontWeight: 'bold', paddingTop: '10px' }}>ISR Y PTU</td></tr>
+
+            <tr style={{ fontWeight: 'bold', borderTop: '2px solid black', backgroundColor: '#f5f5f5' }}>
+              <td style={{ fontStyle: 'italic', padding: '15px 10px' }}>Total Egresos (Gastos + Costos de venta)</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos + 0)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos + 0, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos + 0)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos + 0, totalAcumuladoIngresos)}</td>
+            </tr>
+
+            <tr style={{ height: '50px' }}></tr>
+
+            <tr style={{ fontWeight: 'bold', borderTop: '3px double black', fontSize: '16px', backgroundColor: '#fff' }}>
+              <td style={{ fontStyle: 'italic', padding: '20px 10px' }}>Utilidad (o Pérdida) Final</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoIngresos - totalPeriodoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoIngresos - totalPeriodoEgresos, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoIngresos - totalAcumuladoEgresos)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoIngresos - totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div style={{ marginTop: '50px', textAlign: 'right' }}>
+           <button className="button button--secondary" onClick={() => window.print()} style={{ marginRight: '10px' }}>🖨️ Imprimir Reporte</button>
         </div>
       </div>
 
