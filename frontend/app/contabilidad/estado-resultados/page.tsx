@@ -10,6 +10,7 @@ export default function EstadoResultadosPage() {
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('month');
   const [aiInsight, setAiInsight] = useState<any>(null);
+  const [showAi, setShowAi] = useState(false);
 
   const expenseCategories = [
     'Mensajería',
@@ -130,35 +131,7 @@ export default function EstadoResultadosPage() {
         ))}
       </div>
       
-      {/* 2. Panel Análisis IA */}
-      {aiInsight && (
-        <article className="card" style={{ marginBottom: '30px', borderLeft: '5px solid #2980b9' }}>
-          <div className="card__header" style={{ padding: '20px 20px 0' }}>
-            <div>
-              <h3 className="card__title" style={{ fontSize: '1.4rem' }}>🤖 Análisis Inteligente (IA)</h3>
-              <p className="card__label">Diagnóstico de rentabilidad y salud financiera del negocio.</p>
-            </div>
-            <span className={`badge ${aiInsight.status === 'saludable' ? 'badge--success' : aiInsight.status === 'estable' ? 'badge--warning' : 'badge--warning'}`} style={{ fontSize: '1rem', padding: '10px 20px' }}>
-              {aiInsight.status?.toUpperCase()}
-            </span>
-          </div>
-          <div className="card__body" style={{ padding: '20px' }}>
-            <div className="stack" style={{ gap: '20px' }}>
-              <p style={{ color: '#2c3e50', fontSize: '1.2rem', lineHeight: '1.6', background: '#f5f7fa', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', margin: 0 }}>
-                "{aiInsight.message}"
-              </p>
-              <div>
-                <h5 style={{ margin: '0 0 10px 0', textTransform: 'uppercase', fontSize: '0.9rem', color: '#7f8c8d', letterSpacing: '0.1em' }}>Próximas acciones sugeridas:</h5>
-                <ul style={{ paddingLeft: '20px', margin: 0, display: 'grid', gap: '10px' }}>
-                  {aiInsight.nextActions?.map((action: string, i: number) => (
-                    <li key={i} style={{ color: '#34495e', fontSize: '1rem', lineHeight: '1.5' }}>{action}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </article>
-      )}
+      {/* El análisis IA se reubicó en la sección inferior con botón de despliegue */}
 
       {/* 3. Cuadros de Resumen (Tarjetas) */}
       <section className="dashboard__grid" style={{ marginBottom: '40px' }}>
@@ -288,10 +261,47 @@ export default function EstadoResultadosPage() {
           </tbody>
         </table>
         
-        <div style={{ marginTop: '50px', textAlign: 'right' }}>
-           <button className="button button--secondary" onClick={() => window.print()} style={{ marginRight: '10px' }}>🖨️ Imprimir Reporte</button>
+        <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+           <button 
+             className="button button--secondary" 
+             onClick={() => setShowAi(!showAi)}
+             style={{ padding: '10px 20px', cursor: 'pointer', background: showAi ? '#e2e8f0' : '#fff' }}
+           >
+             {showAi ? '🤖 Ocultar Análisis IA' : '🤖 Ver Análisis IA'}
+           </button>
+           <button className="button button--secondary" onClick={() => window.print()}>🖨️ Imprimir Reporte</button>
         </div>
       </div>
+
+      {/* Panel Análisis IA (Abajo y Escondido) */}
+      {showAi && aiInsight && (
+        <article className="card" style={{ marginTop: '30px', marginBottom: '30px', borderLeft: '5px solid #2980b9' }}>
+          <div className="card__header" style={{ padding: '20px 20px 0' }}>
+            <div>
+              <h3 className="card__title" style={{ fontSize: '1.4rem' }}>🤖 Análisis Inteligente (IA)</h3>
+              <p className="card__label">Diagnóstico de rentabilidad y salud financiera del negocio.</p>
+            </div>
+            <span className={`badge ${aiInsight.status === 'saludable' ? 'badge--success' : aiInsight.status === 'estable' ? 'badge--warning' : 'badge--warning'}`} style={{ fontSize: '1rem', padding: '10px 20px' }}>
+              {aiInsight.status?.toUpperCase()}
+            </span>
+          </div>
+          <div className="card__body" style={{ padding: '20px' }}>
+            <div className="stack" style={{ gap: '20px' }}>
+              <p style={{ color: '#2c3e50', fontSize: '1.2rem', lineHeight: '1.6', background: '#f5f7fa', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', margin: 0 }}>
+                "{aiInsight.message}"
+              </p>
+              <div>
+                <h5 style={{ margin: '0 0 10px 0', textTransform: 'uppercase', fontSize: '0.9rem', color: '#7f8c8d', letterSpacing: '0.1em' }}>Próximas acciones sugeridas:</h5>
+                <ul style={{ paddingLeft: '20px', margin: 0, display: 'grid', gap: '10px' }}>
+                  {aiInsight.nextActions?.map((action: string, i: number) => (
+                    <li key={i} style={{ color: '#34495e', fontSize: '1rem', lineHeight: '1.5' }}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </article>
+      )}
 
       {/* 5. Desglose Detallado */}
       <div style={{ marginTop: '40px' }}>
