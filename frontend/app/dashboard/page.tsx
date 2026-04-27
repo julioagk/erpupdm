@@ -11,6 +11,23 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [accounting, setAccounting] = useState<any>(null);
+  const [monthlyGoal, setMonthlyGoal] = useState<number>(60000);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [tempGoal, setTempGoal] = useState<number>(60000);
+
+  useEffect(() => {
+    const savedGoal = localStorage.getItem('monthly_sales_goal');
+    if (savedGoal) {
+      setMonthlyGoal(Number(savedGoal));
+      setTempGoal(Number(savedGoal));
+    }
+  }, []);
+
+  const handleSaveGoal = () => {
+    setMonthlyGoal(tempGoal);
+    localStorage.setItem('monthly_sales_goal', tempGoal.toString());
+    setIsEditingGoal(false);
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -53,7 +70,7 @@ export default function DashboardPage() {
   const netUtility = accounting?.summary?.net || 0;
   const margin = accounting?.summary?.margin || 0;
   
-  const monthlyGoal = 60000;
+  // monthlyGoal ahora se maneja por estado
   const salesProgress = Math.min(100, Math.round((monthlySales / monthlyGoal) * 100));
   
   const sales = accounting?.sales || [];
@@ -188,9 +205,31 @@ export default function DashboardPage() {
               </div>
 
               <div className="chip-row">
-                <span className="chip">Meta: {money(monthlyGoal)}</span>
-                <span className="chip">Avance: {salesProgress}%</span>
-                <span className="chip">Operaciones: {sales.length}</span>
+                {isEditingGoal ? (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input 
+                      type="number" 
+                      value={tempGoal} 
+                      onChange={(e) => setTempGoal(Number(e.target.value))}
+                      style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #ddd', width: '120px', color: '#333' }}
+                    />
+                    <button onClick={handleSaveGoal} style={{ cursor: 'pointer', background: '#27ae60', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>Guardar</button>
+                    <button onClick={() => setIsEditingGoal(false)} style={{ cursor: 'pointer', background: '#7f8c8d', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px' }}>Cancelar</button>
+                  </div>
+                ) : (
+                  <>
+                    <span 
+                      className="chip" 
+                      style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }} 
+                      onClick={() => { setTempGoal(monthlyGoal); setIsEditingGoal(true); }}
+                      title="Haz clic para editar la meta"
+                    >
+                      Meta: {money(monthlyGoal)} ✏️
+                    </span>
+                    <span className="chip">Avance: {salesProgress}%</span>
+                    <span className="chip">Operaciones: {sales.length}</span>
+                  </>
+                )}
               </div>
 
               <div className="metric__bar">
