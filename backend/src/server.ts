@@ -186,6 +186,20 @@ app.post('/api/invoices', async (request, response) => {
       });
     }
 
+    // Crear el movimiento bancario correspondiente
+    await prisma.bankMovement.create({
+      data: {
+        date: body.date,
+        concept: isExpense 
+          ? `Pago factura ${body.invoiceNumber || ''} - ${body.issuer || 'Gasto'}`
+          : `Cobro factura ${body.invoiceNumber || ''} - ${body.customer || 'Venta'}`,
+        amount: body.amount,
+        kind: isExpense ? 'egreso' : 'ingreso',
+        source: body.paymentMethod || 'Transferencia',
+        status: 'conciliado'
+      }
+    });
+
     const mappedItem = {
       ...newItem,
       issuer: newItem.providerName,
