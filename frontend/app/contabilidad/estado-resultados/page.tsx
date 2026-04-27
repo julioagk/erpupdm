@@ -161,7 +161,7 @@ export default function EstadoResultadosPage() {
       </section>
 
       {/* 4. Estado de Resultados (Tabla Formal) */}
-      <div className="card" style={{ background: 'white', color: 'black', padding: '60px', fontFamily: 'serif', maxWidth: '1200px', margin: '0 auto 40px auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', overflowX: 'auto' }}>
+      <div id="updm-report" className="card" style={{ background: 'white', color: 'black', padding: '60px', fontFamily: 'serif', maxWidth: '1200px', margin: '0 auto 40px auto', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', overflowX: 'auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '40px', borderBottom: '2px solid black', paddingBottom: '10px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0', letterSpacing: '3px' }}>UPDM</h1>
           <h2 style={{ fontSize: '16px', fontWeight: 'normal', margin: '5px 0' }}>Estado de Resultados ({rangeLabels[range]})</h2>
