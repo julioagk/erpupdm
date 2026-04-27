@@ -9,7 +9,7 @@ import { money, type ExpenseInvoice } from '@/lib/data';
 import { fetchFromApi } from '@/lib/api';
 
 const expenseTypeOptions = [
-  'Costo de Ventas',
+  'Servicios y Materiales Indirectos',
   'Mensajería',
   'Gastos de Administración',
   'Honorarios Administrativos',

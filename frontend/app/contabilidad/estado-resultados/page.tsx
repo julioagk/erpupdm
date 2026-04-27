@@ -102,8 +102,8 @@ export default function EstadoResultadosPage() {
 
   const getCategoryTotal = (expenses: any[], cat: string) => expenses.filter(e => e.category === cat).reduce((acc, cur) => acc + cur.amount, 0);
 
-  const costoPeriodoVentas = getCategoryTotal(periodoExpenses, 'Costo de Ventas');
-  const costoAcumuladoVentas = getCategoryTotal(acumuladoExpenses, 'Costo de Ventas');
+  const costoPeriodoVentas = getCategoryTotal(periodoExpenses, 'Servicios y Materiales Indirectos');
+  const costoAcumuladoVentas = getCategoryTotal(acumuladoExpenses, 'Servicios y Materiales Indirectos');
 
   const totalPeriodoEgresos = periodoExpenses.reduce((acc: number, cur: any) => acc + cur.amount, 0);
   const totalAcumuladoEgresos = acumuladoExpenses.reduce((acc: number, cur: any) => acc + cur.amount, 0);
@@ -204,7 +204,10 @@ export default function EstadoResultadosPage() {
             
             {/* Costo de Ventas */}
             <tr style={{ fontWeight: 'bold' }}>
-              <td style={{ paddingLeft: '10px' }}>COSTO DE VENTAS (Compras/Insumos)</td>
+              <td colSpan={5} style={{ paddingLeft: '10px', paddingTop: '10px' }}>COSTO DE VENTAS</td>
+            </tr>
+            <tr>
+              <td style={{ paddingLeft: '20px', padding: '4px 20px' }}>Servicios y Materiales Indirectos</td>
               <td style={{ textAlign: 'right' }}>{fmt(costoPeriodoVentas)}</td>
               <td style={{ textAlign: 'right' }}>{pct(costoPeriodoVentas, totalPeriodoIngresos)}</td>
               <td style={{ textAlign: 'right' }}>{fmt(costoAcumuladoVentas)}</td>
