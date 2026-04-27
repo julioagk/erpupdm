@@ -279,6 +279,17 @@ app.delete('/api/invoices/:id', async (request, response) => {
       });
     }
 
+    // Eliminar el movimiento bancario correspondiente
+    if (invoice.invoiceNumber) {
+      await prisma.bankMovement.deleteMany({
+        where: {
+          concept: {
+            contains: invoice.invoiceNumber
+          }
+        }
+      });
+    }
+
     response.json({ ok: true });
   } catch (error) {
     console.error('Error al eliminar factura:', error);
