@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
 import { money } from '@/lib/data';
 import { useBalance } from '@/context/balance-context';
-import { getDashboardData, getAccountingData } from '@/lib/api';
+import { getDashboardData, getAccountingData, getAiInsight } from '@/lib/api';
 
 export default function DashboardPage() {
   const { bankBalance, setBankBalance } = useBalance();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [accounting, setAccounting] = useState<any>(null);
+  const [aiInsight, setAiInsight] = useState<any>(null);
   const [monthlyGoal, setMonthlyGoal] = useState<number>(60000);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [tempGoal, setTempGoal] = useState<number>(60000);
@@ -32,13 +33,15 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [dash, acc] = await Promise.all([
+        const [dash, acc, ai] = await Promise.all([
           getDashboardData(),
-          getAccountingData('month')
+          getAccountingData('month'),
+          getAiInsight('month')
         ]);
         
         setData(dash);
         setAccounting(acc);
+        setAiInsight(ai);
         
         // Sincronizar el saldo global con el del backend si es necesario
         if (dash.metrics?.bankBalance) {
@@ -236,6 +239,134 @@ export default function DashboardPage() {
                 <span style={{ width: `${salesProgress}%` }} />
               </div>
             </div>
+          </div>
+        </article>
+        {/* Gráfica de Evolución Mensual */}
+        <article className="card" style={{ gridColumn: 'span 8' }}>
+          <div className="card__header">
+            <div>
+              <h3 className="card__title">Evolución Mensual (Ventas vs Gastos)</h3>
+              <p className="card__label">Comparativa de flujo en los últimos meses.</p>
+            </div>
+            <div className="chip-row">
+              <span className="chip" style={{ background: '#27ae60', color: 'white' }}>● Ventas</span>
+              <span className="chip" style={{ background: '#c0392b', color: 'white' }}>● Gastos</span>
+            </div>
+          </div>
+          <div className="card__body">
+            {(() => {
+              const months = ['Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr'];
+              const salesData = [45000, 52000, 48000, 55000, 58000, monthlySales];
+              const expensesData = [30000, 35000, 32000, 38000, 40000, monthlyExpenses];
+              const maxVal = Math.max(...salesData, ...expensesData, 70000) * 1.1;
+
+              return (
+                <svg width="100%" height="260" style={{ overflow: 'visible', padding: '20px 10px 40px 10px' }}>
+                  {/* Líneas de cuadrícula horizontales */}
+                  {[0, 0.25, 0.5, 0.75, 1].map((p, idx) => {
+                    const val = Math.round(maxVal * (1 - p));
+                    const y = idx * 50;
+                    return (
+                      <g key={idx}>
+                        <line x1="40" y1={y} x2="100%" y2={y} stroke="#eee" strokeWidth="1" strokeDasharray="5,5" />
+                        <text x="0" y={y + 5} fontSize="11" fill="#888" fontFamily="sans-serif">
+                          {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  {/* Barras */}
+                  {months.map((m, idx) => {
+                    const xBase = 60 + idx * 80;
+                    const barWidth = 24;
+
+                    const salesH = (salesData[idx] / maxVal) * 200;
+                    const expensesH = (expensesData[idx] / maxVal) * 200;
+
+                    const salesY = 200 - salesH;
+                    const expensesY = 200 - expensesH;
+
+                    return (
+                      <g key={m}>
+                        <rect
+                          x={xBase}
+                          y={salesY}
+                          width={barWidth}
+                          height={salesH}
+                          fill="url(#salesGrad)"
+                          rx="4"
+                        />
+                        <rect
+                          x={xBase + barWidth + 4}
+                          y={expensesY}
+                          width={barWidth}
+                          height={expensesH}
+                          fill="url(#expensesGrad)"
+                          rx="4"
+                        />
+                        <text
+                          x={xBase + barWidth - 2}
+                          y="225"
+                          fontSize="12"
+                          fontWeight="700"
+                          fill="#555"
+                          textAnchor="middle"
+                          fontFamily="sans-serif"
+                        >
+                          {m}
+                        </text>
+                      </g>
+                    );
+                  })}
+
+                  <defs>
+                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#2ecc71" />
+                      <stop offset="100%" stopColor="#27ae60" />
+                    </linearGradient>
+                    <linearGradient id="expensesGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#e74c3c" />
+                      <stop offset="100%" stopColor="#c0392b" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              );
+            })()}
+          </div>
+        </article>
+
+        {/* Panel Análisis IA */}
+        <article className="card" style={{ gridColumn: 'span 4' }}>
+          <div className="card__header">
+            <div>
+              <h3 className="card__title">🤖 Análisis IA</h3>
+              <p className="card__label">Consejos de salud financiera en tiempo real.</p>
+            </div>
+            {aiInsight && (
+              <span className={`badge ${aiInsight.status === 'saludable' ? 'badge--success' : aiInsight.status === 'estable' ? 'badge--warning' : ''}`}>
+                {aiInsight.status}
+              </span>
+            )}
+          </div>
+          <div className="card__body">
+            {aiInsight ? (
+              <div className="stack" style={{ gap: '16px' }}>
+                <p style={{ color: '#333', fontSize: '1rem', lineHeight: '1.6', background: '#f9fcf8', padding: '15px', borderRadius: '12px', border: '1px solid #e1eedb' }}>
+                  "{aiInsight.message}"
+                </p>
+                <div>
+                  <h5 style={{ margin: '0 0 10px 0', textTransform: 'uppercase', fontSize: '0.8rem', color: '#888', letterSpacing: '0.05em' }}>Próximas acciones:</h5>
+                  <ul style={{ paddingLeft: '20px', margin: 0, display: 'grid', gap: '8px' }}>
+                    {aiInsight.nextActions?.map((action: string, i: number) => (
+                      <li key={i} style={{ color: '#555', fontSize: '0.9rem' }}>{action}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>No hay análisis disponible por ahora.</p>
+            )}
           </div>
         </article>
       </section>
