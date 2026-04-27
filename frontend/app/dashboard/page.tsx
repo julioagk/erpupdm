@@ -252,10 +252,48 @@ export default function DashboardPage() {
           </div>
           <div className="card__body">
             {(() => {
-              const months = ['Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr'];
-              const salesData = [45000, 52000, 48000, 55000, 58000, monthlySales];
-              const expensesData = [30000, 35000, 32000, 38000, 40000, monthlyExpenses];
-              const maxVal = Math.max(...salesData, ...expensesData, 70000) * 1.1;
+              // Calcular los últimos 6 meses reales en base a las facturas
+              const monthsNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+              const now = new Date();
+              const currentMonth = now.getMonth();
+              const currentYear = now.getFullYear();
+
+              const months: string[] = [];
+              const salesData: number[] = [0, 0, 0, 0, 0, 0];
+              const expensesData: number[] = [0, 0, 0, 0, 0, 0];
+
+              for (let i = 5; i >= 0; i--) {
+                const d = new Date(currentYear, currentMonth - i, 1);
+                months.push(monthsNames[d.getMonth()]);
+              }
+
+              // Agrupar ventas reales
+              const salesList = accounting?.sales || [];
+              salesList.forEach((s: any) => {
+                if (!s.date) return;
+                const sDate = new Date(s.date.slice(0, 10));
+                for (let i = 5; i >= 0; i--) {
+                  const d = new Date(currentYear, currentMonth - i, 1);
+                  if (sDate.getFullYear() === d.getFullYear() && sDate.getMonth() === d.getMonth()) {
+                    salesData[5 - i] += s.amount || 0;
+                  }
+                }
+              });
+
+              // Agrupar gastos reales
+              const expensesList = accounting?.expenses || [];
+              expensesList.forEach((e: any) => {
+                if (!e.date) return;
+                const eDate = new Date(e.date.slice(0, 10));
+                for (let i = 5; i >= 0; i--) {
+                  const d = new Date(currentYear, currentMonth - i, 1);
+                  if (eDate.getFullYear() === d.getFullYear() && eDate.getMonth() === d.getMonth()) {
+                    expensesData[5 - i] += e.amount || 0;
+                  }
+                }
+              });
+
+              const maxVal = Math.max(...salesData, ...expensesData, 10000) * 1.2;
 
               return (
                 <svg width="100%" height="260" style={{ overflow: 'visible', padding: '20px 10px 40px 10px' }}>
@@ -286,6 +324,7 @@ export default function DashboardPage() {
 
                     return (
                       <g key={m}>
+                        {/* Barra Ventas */}
                         <rect
                           x={xBase}
                           y={salesY}
@@ -293,7 +332,17 @@ export default function DashboardPage() {
                           height={salesH}
                           fill="url(#salesGrad)"
                           rx="4"
-                        />
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <title>{`Ventas ${m}: ${money(salesData[idx])}`}</title>
+                        </rect>
+                        {salesData[idx] > 0 && (
+                          <text x={xBase + barWidth/2} y={salesY - 5} fontSize="9" fontWeight="700" fill="#27ae60" textAnchor="middle" fontFamily="sans-serif">
+                            {salesData[idx] >= 1000 ? `${(salesData[idx]/1000).toFixed(1)}k` : salesData[idx]}
+                          </text>
+                        )}
+
+                        {/* Barra Gastos */}
                         <rect
                           x={xBase + barWidth + 4}
                           y={expensesY}
@@ -301,7 +350,17 @@ export default function DashboardPage() {
                           height={expensesH}
                           fill="url(#expensesGrad)"
                           rx="4"
-                        />
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <title>{`Gastos ${m}: ${money(expensesData[idx])}`}</title>
+                        </rect>
+                        {expensesData[idx] > 0 && (
+                          <text x={xBase + barWidth + 4 + barWidth/2} y={expensesY - 5} fontSize="9" fontWeight="700" fill="#c0392b" textAnchor="middle" fontFamily="sans-serif">
+                            {expensesData[idx] >= 1000 ? `${(expensesData[idx]/1000).toFixed(1)}k` : expensesData[idx]}
+                          </text>
+                        )}
+
+                        {/* Texto del mes */}
                         <text
                           x={xBase + barWidth - 2}
                           y="225"
