@@ -102,8 +102,14 @@ export default function EstadoResultadosPage() {
 
   const getCategoryTotal = (expenses: any[], cat: string) => expenses.filter(e => e.category === cat).reduce((acc, cur) => acc + cur.amount, 0);
 
+  const costoPeriodoVentas = getCategoryTotal(periodoExpenses, 'Costo de Ventas');
+  const costoAcumuladoVentas = getCategoryTotal(acumuladoExpenses, 'Costo de Ventas');
+
   const totalPeriodoEgresos = periodoExpenses.reduce((acc: number, cur: any) => acc + cur.amount, 0);
   const totalAcumuladoEgresos = acumuladoExpenses.reduce((acc: number, cur: any) => acc + cur.amount, 0);
+
+  const gastosPeriodoAdmin = totalPeriodoEgresos - costoPeriodoVentas;
+  const gastosAcumuladoAdmin = totalAcumuladoEgresos - costoAcumuladoVentas;
 
   const pct = (val: number, total: number) => total > 0 ? ((val / total) * 100).toFixed(2) : '0.00';
   const fmt = (val: number) => val === 0 ? '-' : val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -198,18 +204,18 @@ export default function EstadoResultadosPage() {
             
             {/* Costo de Ventas */}
             <tr style={{ fontWeight: 'bold' }}>
-              <td style={{ paddingLeft: '10px' }}>COSTO DE VENTAS</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ paddingLeft: '10px' }}>COSTO DE VENTAS (Compras/Insumos)</td>
+              <td style={{ textAlign: 'right' }}>{fmt(costoPeriodoVentas)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(costoPeriodoVentas, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(costoAcumuladoVentas)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(costoAcumuladoVentas, totalAcumuladoIngresos)}</td>
             </tr>
             <tr style={{ fontWeight: 'bold', borderTop: '1px solid #ddd' }}>
               <td style={{ paddingLeft: '20px' }}>TOTAL COSTO DE VENTAS</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
-              <td style={{ textAlign: 'right' }}>-</td>
-              <td style={{ textAlign: 'right' }}>0.00</td>
+              <td style={{ textAlign: 'right' }}>{fmt(costoPeriodoVentas)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(costoPeriodoVentas, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(costoAcumuladoVentas)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(costoAcumuladoVentas, totalAcumuladoIngresos)}</td>
             </tr>
 
             {/* Gastos de Venta y Administración */}
@@ -230,10 +236,10 @@ export default function EstadoResultadosPage() {
             
             <tr style={{ fontWeight: 'bold', borderTop: '1px solid black' }}>
               <td style={{ paddingLeft: '20px', padding: '10px 0' }}>TOTAL DE GASTOS DE VENTAS Y ADMINISTRACION</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalPeriodoEgresos)}</td>
-              <td style={{ textAlign: 'right' }}>{pct(totalPeriodoEgresos, totalPeriodoIngresos)}</td>
-              <td style={{ textAlign: 'right' }}>{fmt(totalAcumuladoEgresos)}</td>
-              <td style={{ textAlign: 'right' }}>{pct(totalAcumuladoEgresos, totalAcumuladoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(gastosPeriodoAdmin)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(gastosPeriodoAdmin, totalPeriodoIngresos)}</td>
+              <td style={{ textAlign: 'right' }}>{fmt(gastosAcumuladoAdmin)}</td>
+              <td style={{ textAlign: 'right' }}>{pct(gastosAcumuladoAdmin, totalAcumuladoIngresos)}</td>
             </tr>
 
             {/* Secciones Adicionales */}
