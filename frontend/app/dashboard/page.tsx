@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
 import { money } from '@/lib/data';
 import { useBalance } from '@/context/balance-context';
-import { getDashboardData, getAccountingData, getAiInsight } from '@/lib/api';
+import { getDashboardData, getAccountingData } from '@/lib/api';
 
 export default function DashboardPage() {
   const { bankBalance, setBankBalance } = useBalance();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [accounting, setAccounting] = useState<any>(null);
-  const [aiInsight, setAiInsight] = useState<any>(null);
   const [monthlyGoal, setMonthlyGoal] = useState<number>(60000);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [tempGoal, setTempGoal] = useState<number>(60000);
@@ -33,15 +32,13 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [dash, acc, ai] = await Promise.all([
+        const [dash, acc] = await Promise.all([
           getDashboardData(),
-          getAccountingData('month'),
-          getAiInsight('month')
+          getAccountingData('month')
         ]);
         
         setData(dash);
         setAccounting(acc);
-        setAiInsight(ai);
         
         // Sincronizar el saldo global con el del backend si es necesario
         if (dash.metrics?.bankBalance) {
@@ -242,7 +239,7 @@ export default function DashboardPage() {
           </div>
         </article>
         {/* Gráfica de Evolución Mensual */}
-        <article className="card" style={{ gridColumn: 'span 8' }}>
+        <article className="card" style={{ gridColumn: 'span 12' }}>
           <div className="card__header">
             <div>
               <h3 className="card__title">Evolución Mensual (Ventas vs Gastos)</h3>
@@ -336,39 +333,7 @@ export default function DashboardPage() {
           </div>
         </article>
 
-        {/* Panel Análisis IA */}
-        <article className="card" style={{ gridColumn: 'span 4' }}>
-          <div className="card__header">
-            <div>
-              <h3 className="card__title">🤖 Análisis IA</h3>
-              <p className="card__label">Consejos de salud financiera en tiempo real.</p>
-            </div>
-            {aiInsight && (
-              <span className={`badge ${aiInsight.status === 'saludable' ? 'badge--success' : aiInsight.status === 'estable' ? 'badge--warning' : ''}`}>
-                {aiInsight.status}
-              </span>
-            )}
-          </div>
-          <div className="card__body">
-            {aiInsight ? (
-              <div className="stack" style={{ gap: '16px' }}>
-                <p style={{ color: '#333', fontSize: '1rem', lineHeight: '1.6', background: '#f9fcf8', padding: '15px', borderRadius: '12px', border: '1px solid #e1eedb' }}>
-                  "{aiInsight.message}"
-                </p>
-                <div>
-                  <h5 style={{ margin: '0 0 10px 0', textTransform: 'uppercase', fontSize: '0.8rem', color: '#888', letterSpacing: '0.05em' }}>Próximas acciones:</h5>
-                  <ul style={{ paddingLeft: '20px', margin: 0, display: 'grid', gap: '8px' }}>
-                    {aiInsight.nextActions?.map((action: string, i: number) => (
-                      <li key={i} style={{ color: '#555', fontSize: '0.9rem' }}>{action}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ) : (
-              <p style={{ color: '#888', textAlign: 'center', padding: '20px' }}>No hay análisis disponible por ahora.</p>
-            )}
-          </div>
-        </article>
+
       </section>
     </WorkspaceShell>
   );

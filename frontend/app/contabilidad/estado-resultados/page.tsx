@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
 import { money } from '@/lib/data';
-import { fetchFromApi } from '@/lib/api';
+import { fetchFromApi, getAiInsight } from '@/lib/api';
 
 export default function EstadoResultadosPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('month');
+  const [aiInsight, setAiInsight] = useState<any>(null);
 
   const expenseCategories = [
     'Mensajería',
@@ -28,8 +29,12 @@ export default function EstadoResultadosPage() {
     async function loadAccounting() {
       setLoading(true);
       try {
-        const result = await fetchFromApi('/api/accounting?range=all');
+        const [result, ai] = await Promise.all([
+          fetchFromApi('/api/accounting?range=all'),
+          getAiInsight('month')
+        ]);
         setData(result);
+        setAiInsight(ai);
       } catch (error) {
         console.error('Error cargando contabilidad:', error);
       } finally {
@@ -124,6 +129,36 @@ export default function EstadoResultadosPage() {
           </button>
         ))}
       </div>
+      
+      {/* Panel Análisis IA */}
+      {aiInsight && (
+        <article className="card" style={{ gridColumn: 'span 12', marginBottom: '40px', borderLeft: '5px solid #2980b9' }}>
+          <div className="card__header" style={{ padding: '20px 20px 0' }}>
+            <div>
+              <h3 className="card__title" style={{ fontSize: '1.4rem' }}>🤖 Análisis Inteligente (IA)</h3>
+              <p className="card__label">Diagnóstico de rentabilidad y salud financiera del negocio.</p>
+            </div>
+            <span className={`badge ${aiInsight.status === 'saludable' ? 'badge--success' : aiInsight.status === 'estable' ? 'badge--warning' : ''}`} style={{ fontSize: '1rem', padding: '10px 20px' }}>
+              {aiInsight.status?.toUpperCase()}
+            </span>
+          </div>
+          <div className="card__body" style={{ padding: '20px' }}>
+            <div className="stack" style={{ gap: '20px' }}>
+              <p style={{ color: '#2c3e50', fontSize: '1.2rem', lineHeight: '1.6', background: '#f5f7fa', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', margin: 0 }}>
+                "{aiInsight.message}"
+              </p>
+              <div>
+                <h5 style={{ margin: '0 0 10px 0', textTransform: 'uppercase', fontSize: '0.9rem', color: '#7f8c8d', letterSpacing: '0.1em' }}>Próximas acciones sugeridas:</h5>
+                <ul style={{ paddingLeft: '20px', margin: 0, display: 'grid', gap: '10px' }}>
+                  {aiInsight.nextActions?.map((action: string, i: number) => (
+                    <li key={i} style={{ color: '#34495e', fontSize: '1rem', lineHeight: '1.5' }}>{action}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </article>
+      )}
 
       {/* 2. Cuadros de Resumen (Tarjetas) */}
       <section className="dashboard__grid" style={{ marginBottom: '40px' }}>
