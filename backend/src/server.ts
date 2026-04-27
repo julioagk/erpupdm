@@ -214,9 +214,41 @@ app.post('/api/invoices', async (request, response) => {
 });
 
 app.get('/api/bank', async (_request, response) => {
-  const settings = await prisma.globalSettings.findUnique({ where: { id: 'global' } });
-  const items = await prisma.bankMovement.findMany({ orderBy: { date: 'desc' } });
-  response.json({ items, balance: settings?.bankBalance ?? 0 });
+  try {
+    const settings = await prisma.globalSettings.findUnique({ where: { id: 'global' } });
+    const items = await prisma.bankMovement.findMany({ orderBy: { date: 'desc' } });
+    const invoices = await prisma.invoice.findMany({ select: { invoiceNumber: true } });
+    const validInvoiceNumbers = new Set(invoices.map(inv => inv.invoiceNumber));
+
+    // Identificar movimientos huérfanos generados por facturas borradas
+    const movementsToDelete: string[] = [];
+    const cleanItems = items.filter(item => {
+      // Extraer el número de factura del concepto
+      const match = item.concept.match(/factura\s+([^\s-]+)/);
+      if (match && match[1]) {
+        const invoiceNum = match[1];
+        if (!validInvoiceNumbers.has(invoiceNum)) {
+          movementsToDelete.push(item.id);
+          return false; // Filtrar para no mostrarlo
+        }
+      }
+      return true;
+    });
+
+    // Borrar los huérfanos de la base de datos
+    if (movementsToDelete.length > 0) {
+      await prisma.bankMovement.deleteMany({
+        where: {
+          id: { in: movementsToDelete }
+        }
+      });
+    }
+
+    response.json({ items: cleanItems, balance: settings?.bankBalance ?? 0 });
+  } catch (error) {
+    console.error('Error al cargar banco:', error);
+    response.status(500).json({ error: 'Error al cargar banco' });
+  }
 });
 
 app.post('/api/bank/balance', async (request, response) => {
