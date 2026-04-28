@@ -9,17 +9,20 @@ import { money, type ExpenseInvoice } from '@/lib/data';
 import { fetchFromApi } from '@/lib/api';
 
 const expenseTypeOptions = [
-  'Mensajería',
-  'Gastos de Administración',
-  'Honorarios Administrativos',
-  'Arrendamiento de Inmuebles',
-  'Viáticos y Gastos de Viaje',
-  'Gastos de Oficina',
-  'Combustibles y Lubricantes',
-  'Otros Impuestos y Derechos',
-  'Suscripciones y Cuotas',
-  'Comisiones Bancarias',
-  'Partidas No Deducibles'
+  'SUELDOS',
+  'VUELOS',
+  'EQUIPAJE',
+  'UBER',
+  'HOSPEDAJE',
+  'RENTA DE CARRO',
+  'GASOLINA',
+  'CASETAS',
+  'VIATICOS',
+  'ENVIO DE HERRAMIENTA',
+  'EXTRAS',
+  'ENVIO DE LIQUIDO',
+  'COMPRA DE HERRAMIENTA',
+  'EXTRA POLLO'
 ];
 
 export default function OperationalExpensesPage() {
@@ -30,13 +33,13 @@ export default function OperationalExpensesPage() {
   const [affectBank, setAffectBank] = useState(true);
   const [editingRow, setEditingRow] = useState<ExpenseInvoice | null>(null);
   
-  const [manualExpense, setManualExpense] = useState({ issuer: '', invoiceNumber: '', date: '', category: 'Mensajería', subtotal: 0, iva: 0, amount: 0 });
+  const [manualExpense, setManualExpense] = useState({ issuer: '', invoiceNumber: '', date: '', category: 'SUELDOS', subtotal: 0, iva: 0, amount: 0 });
 
   useEffect(() => {
     async function loadExpenses() {
       try {
         const data = await fetchFromApi('/api/expenses');
-        const filtered = (data.items || []).filter((i: any) => i.category !== 'Servicios y Materiales Indirectos');
+        const filtered = (data.items || []).filter((i: any) => expenseTypeOptions.includes(i.category));
         setInvoices(filtered);
       } catch (error) {
         console.error('Error cargando gastos operacionales:', error);
@@ -48,13 +51,11 @@ export default function OperationalExpensesPage() {
   }, []);
 
   const expenseColumns = [
-    { key: 'issuer', label: 'Emisor', width: '18%' },
-    { key: 'invoiceNumber', label: 'Folio', width: '12%' },
-    { key: 'date', label: 'Fecha', width: '12%' },
-    { key: 'category', label: 'Tipo de Gasto', width: '20%' },
-    { key: 'subtotal', label: 'Subtotal', render: (v: number) => money(v), width: '12%' },
-    { key: 'iva', label: 'IVA', render: (v: number) => money(v), width: '11%' },
-    { key: 'amount', label: 'Total', render: (v: number) => money(v), width: '15%' }
+    { key: 'category', label: 'Concepto', width: '25%' },
+    { key: 'invoiceNumber', label: 'Folio', width: '15%' },
+    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '20%' },
+    { key: 'date', label: 'Fecha', width: '20%' },
+    { key: 'issuer', label: 'Emisor', width: '20%' }
   ];
 
   async function handleDelete(item: ExpenseInvoice) {
@@ -99,7 +100,7 @@ export default function OperationalExpensesPage() {
           issuer: parsed.issuer,
           invoiceNumber: parsed.folio,
           amount: parsed.total,
-          category: parsed.expenseType || 'Gastos de Administración',
+          category: parsed.expenseType || 'SUELDOS',
           source: 'XML / PDF',
           affectBank
         })
@@ -136,7 +137,7 @@ export default function OperationalExpensesPage() {
       setAddModalOpen(false);
       setAddMode('file');
       setAffectBank(true);
-      setManualExpense({ issuer: '', invoiceNumber: '', date: '', category: 'Mensajería', subtotal: 0, iva: 0, amount: 0 });
+      setManualExpense({ issuer: '', invoiceNumber: '', date: '', category: 'SUELDOS', subtotal: 0, iva: 0, amount: 0 });
     } catch (error) {
       alert('Error al guardar la compra en el servidor');
     }
