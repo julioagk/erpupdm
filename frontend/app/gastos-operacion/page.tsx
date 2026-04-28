@@ -51,8 +51,9 @@ export default function OperationalExpensesPage() {
   }, []);
 
   const expenseColumns = [
-    { key: 'category', label: 'Concepto', width: '60%' },
-    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '40%' }
+    { key: 'category', label: 'Concepto', width: '40%' },
+    { key: 'invoiceNumber', label: 'Folio', width: '30%' },
+    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '30%' }
   ];
 
   async function handleDelete(item: ExpenseInvoice) {
@@ -159,7 +160,7 @@ export default function OperationalExpensesPage() {
         if (parts.length >= 2) {
           const rawConcept = parts[0].trim();
           const rawAmount = parseFloat(parts[1].trim());
-          const rawIssuer = parts[2] ? parts[2].trim() : 'Gasto Masivo';
+          const rawFolio = parts[2] ? parts[2].trim() : `CSV-${Date.now().toString().slice(-4)}${i}`;
 
           const conceptUpper = rawConcept.toUpperCase();
           const matchedConcept = expenseTypeOptions.find(opt => opt === conceptUpper || opt.startsWith(conceptUpper));
@@ -168,7 +169,7 @@ export default function OperationalExpensesPage() {
             parsedData.push({
               category: matchedConcept,
               amount: rawAmount,
-              issuer: rawIssuer
+              invoiceNumber: rawFolio
             });
           }
         }
@@ -190,7 +191,8 @@ export default function OperationalExpensesPage() {
               type: 'EXPENSE',
               category: item.category,
               amount: item.amount,
-              issuer: item.issuer,
+              invoiceNumber: item.invoiceNumber,
+              issuer: 'Importación CSV',
               date: new Date().toISOString(),
               source: 'Importación CSV',
               affectBank
@@ -364,8 +366,8 @@ export default function OperationalExpensesPage() {
             <p style={{ marginBottom: '20px', color: '#475569', fontWeight: 500, fontSize: '1rem' }}>
               Sube un archivo <strong>.csv</strong> masivo. <br />
               La estructura obligatoria debe ser: <br />
-              <code style={{ background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontSize: '1.1rem', display: 'inline-block', marginTop: '5px' }}>Concepto, Monto</code> <br />
-              <small style={{ color: '#64748b' }}>(Ejemplo: UBER, 350.50)</small>
+              <code style={{ background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontSize: '1.1rem', display: 'inline-block', marginTop: '5px' }}>Concepto, Monto, Folio</code> <br />
+              <small style={{ color: '#64748b' }}>(Ejemplo: UBER, 350.50, A-123)</small>
             </p>
             <input 
               type="file" 
