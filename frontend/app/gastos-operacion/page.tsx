@@ -315,45 +315,23 @@ export default function OperationalExpensesPage() {
         {addMode === 'manual' && (
           <form className="stack" onSubmit={handleSaveManualExpense} style={{ marginTop: '20px' }}>
             <label className="form__row">
-              <span className="form__label">Emisor / Proveedor</span>
-              <input required className="form__input" placeholder="Nombre de la empresa" value={manualExpense.issuer} onChange={e => setManualExpense({...manualExpense, issuer: e.target.value})} />
+              <span className="form__label">Concepto</span>
+              <select className="form__select" value={manualExpense.category} onChange={e => setManualExpense({...manualExpense, category: e.target.value})}>
+                {expenseTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
             </label>
+            
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               <label className="form__row">
                 <span className="form__label">Folio</span>
                 <input className="form__input" placeholder="A-1234" value={manualExpense.invoiceNumber} onChange={e => setManualExpense({...manualExpense, invoiceNumber: e.target.value})} />
               </label>
               <label className="form__row">
-                <span className="form__label">Fecha</span>
-                <input required className="form__input" type="datetime-local" value={manualExpense.date} onChange={e => setManualExpense({...manualExpense, date: e.target.value})} />
+                <span className="form__label">Monto (Total)</span>
+                <input required type="number" step="0.01" className="form__input" placeholder="0.00" value={manualExpense.amount || ''} onChange={e => setManualExpense({...manualExpense, amount: parseFloat(e.target.value) || 0, subtotal: parseFloat(e.target.value) || 0})} />
               </label>
             </div>
-            
-            <label className="form__row">
-              <span className="form__label">Categoría de Gasto</span>
-              <select className="form__select" value={manualExpense.category} onChange={e => setManualExpense({...manualExpense, category: e.target.value})}>
-                {expenseTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
-            </label>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-              <label className="form__row">
-                <span className="form__label">Subtotal</span>
-                <input required type="number" step="0.01" className="form__input" value={manualExpense.subtotal || ''} onChange={e => {
-                  const sub = parseFloat(e.target.value) || 0;
-                  const iva = parseFloat((sub * 0.16).toFixed(2));
-                  setManualExpense({...manualExpense, subtotal: sub, iva: iva, amount: parseFloat((sub + iva).toFixed(2))});
-                }} />
-              </label>
-              <label className="form__row">
-                <span className="form__label">IVA (16%)</span>
-                <input required type="number" step="0.01" className="form__input" value={manualExpense.iva || ''} onChange={e => setManualExpense({...manualExpense, iva: parseFloat(e.target.value) || 0, amount: parseFloat((manualExpense.subtotal + (parseFloat(e.target.value) || 0)).toFixed(2))})} />
-              </label>
-              <label className="form__row">
-                <span className="form__label">Total</span>
-                <input required type="number" step="0.01" className="form__input" value={manualExpense.amount || ''} onChange={e => setManualExpense({...manualExpense, amount: parseFloat(e.target.value) || 0})} />
-              </label>
-            </div>
             <div className="form__actions" style={{ marginTop: '20px', display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
               <button type="button" className="button button--secondary" onClick={() => { setAddModalOpen(false); setAddMode('file'); }}>Cancelar</button>
               <button type="submit" className="button button--primary">Registrar Gasto</button>
