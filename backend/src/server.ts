@@ -227,7 +227,7 @@ app.get('/api/bank', async (_request, response) => {
     const movementsToDelete: string[] = [];
     const cleanItems = items.filter(item => {
       // Extraer el número de factura del concepto
-      const match = item.concept.match(/factura\s+([^\s-]+)/);
+      const match = item.concept.match(/factura\s+(.*?)\s+-/);
       if (match && match[1]) {
         const invoiceNum = match[1];
         if (!validInvoiceNumbers.has(invoiceNum)) {
