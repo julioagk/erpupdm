@@ -29,7 +29,7 @@ export default function OperationalExpensesPage() {
   const [invoices, setInvoices] = useState<ExpenseInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
-  const [addMode, setAddMode] = useState<'file' | 'manual'>('file');
+  const [addMode, setAddMode] = useState<'file' | 'manual' | 'csv'>('file');
   const [affectBank, setAffectBank] = useState(true);
   const [editingRow, setEditingRow] = useState<ExpenseInvoice | null>(null);
   
@@ -51,11 +51,8 @@ export default function OperationalExpensesPage() {
   }, []);
 
   const expenseColumns = [
-    { key: 'category', label: 'Concepto', width: '25%' },
-    { key: 'invoiceNumber', label: 'Folio', width: '15%' },
-    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '20%' },
-    { key: 'date', label: 'Fecha', width: '20%' },
-    { key: 'issuer', label: 'Emisor', width: '20%' }
+    { key: 'category', label: 'Concepto', width: '60%' },
+    { key: 'amount', label: 'Monto', render: (v: number) => money(v), width: '40%' }
   ];
 
   async function handleDelete(item: ExpenseInvoice) {
@@ -142,7 +139,76 @@ export default function OperationalExpensesPage() {
       alert('Error al guardar la compra en el servidor');
     }
   }
+  async function handleCsvUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split('\n');
+      const parsedData: any[] = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        const parts = line.split(',');
+        if (parts.length >= 2) {
+          const rawConcept = parts[0].trim();
+          const rawAmount = parseFloat(parts[1].trim());
+          const rawIssuer = parts[2] ? parts[2].trim() : 'Gasto Masivo';
+
+          const conceptUpper = rawConcept.toUpperCase();
+          const matchedConcept = expenseTypeOptions.find(opt => opt === conceptUpper || opt.startsWith(conceptUpper));
+
+          if (matchedConcept && !isNaN(rawAmount)) {
+            parsedData.push({
+              category: matchedConcept,
+              amount: rawAmount,
+              issuer: rawIssuer
+            });
+          }
+        }
+      }
+
+      if (parsedData.length === 0) {
+        alert('No se encontraron registros válidos en el CSV. Formato esperado: Concepto, Monto');
+        return;
+      }
+
+      if (!confirm(`¿Deseas registrar ${parsedData.length} gastos masivamente?`)) return;
+
+      try {
+        const newInvoices: any[] = [];
+        for (const item of parsedData) {
+          const res = await fetchFromApi('/api/invoices', {
+            method: 'POST',
+            body: JSON.stringify({
+              type: 'EXPENSE',
+              category: item.category,
+              amount: item.amount,
+              issuer: item.issuer,
+              date: new Date().toISOString(),
+              source: 'Importación CSV',
+              affectBank
+            })
+          });
+          newInvoices.push(res);
+        }
+        setInvoices(prev => [...newInvoices, ...prev]);
+        alert(`¡Exitoso! Se importaron ${newInvoices.length} registros operacionales.`);
+        setAddModalOpen(false);
+        setAddMode('file');
+      } catch (error) {
+        alert('Hubo un error al procesar algunos registros masivos.');
+      }
+    };
+
+    reader.readAsText(file);
+  }
   async function handleViewPdf(row: any) {
     try {
       const data = await fetchFromApi(`/api/invoices/${row.id}/pdf`);
@@ -216,7 +282,7 @@ export default function OperationalExpensesPage() {
             onClick={() => setAddMode('file')}
             style={{ padding: '10px 20px', cursor: 'pointer', background: addMode === 'file' ? '#e2e8f0' : '#fff', border: '1px solid var(--line)', borderRadius: '20px' }}
           >
-            📁 Subir Archivo (XML/PDF)
+            📁 Subir XML/PDF
           </button>
           <button 
             type="button" 
@@ -225,9 +291,16 @@ export default function OperationalExpensesPage() {
           >
             ✍️ Registro Manual
           </button>
+          <button 
+            type="button" 
+            onClick={() => setAddMode('csv')}
+            style={{ padding: '10px 20px', cursor: 'pointer', background: addMode === 'csv' ? '#e2e8f0' : '#fff', border: '1px solid var(--line)', borderRadius: '20px' }}
+          >
+            📊 Importar CSV
+          </button>
         </div>
 
-        {addMode === 'file' ? (
+        {addMode === 'file' && (
           <InvoiceUploader
             title="Agregar gasto operacional"
             description="Sube XML o PDF para registrar emisor, folio, subtotal, IVA, total y tipo de gasto."
@@ -235,7 +308,9 @@ export default function OperationalExpensesPage() {
             accent="rgba(139, 195, 74, 0.18)"
             onParsed={handleConfirmNew}
           />
-        ) : (
+        )}
+
+        {addMode === 'manual' && (
           <form className="stack" onSubmit={handleSaveManualExpense} style={{ marginTop: '20px' }}>
             <label className="form__row">
               <span className="form__label">Emisor / Proveedor</span>
@@ -282,6 +357,30 @@ export default function OperationalExpensesPage() {
               <button type="submit" className="button button--primary">Registrar Gasto</button>
             </div>
           </form>
+        )}
+
+        {addMode === 'csv' && (
+          <div style={{ padding: '30px 20px', background: '#f8fafc', borderRadius: '12px', border: '2px dashed #cbd5e1', textAlign: 'center' }}>
+            <p style={{ marginBottom: '20px', color: '#475569', fontWeight: 500, fontSize: '1rem' }}>
+              Sube un archivo <strong>.csv</strong> masivo. <br />
+              La estructura obligatoria debe ser: <br />
+              <code style={{ background: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontSize: '1.1rem', display: 'inline-block', marginTop: '5px' }}>Concepto, Monto</code> <br />
+              <small style={{ color: '#64748b' }}>(Ejemplo: UBER, 350.50)</small>
+            </p>
+            <input 
+              type="file" 
+              accept=".csv" 
+              onChange={handleCsvUpload} 
+              style={{ display: 'none' }} 
+              id="csv-file-input" 
+            />
+            <label 
+              htmlFor="csv-file-input" 
+              style={{ padding: '12px 30px', background: 'var(--primary)', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, display: 'inline-block' }}
+            >
+              📊 Seleccionar archivo CSV
+            </label>
+          </div>
         )}
       </Modal>
 
