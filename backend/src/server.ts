@@ -152,6 +152,7 @@ app.post('/api/invoices', async (request, response) => {
   try {
     const body = request.body;
     const isExpense = body.type === 'EXPENSE';
+    const affectBank = body.affectBank !== false; // por defecto true
 
     const newItem = await prisma.invoice.create({
       data: {
@@ -172,22 +173,23 @@ app.post('/api/invoices', async (request, response) => {
       }
     });
 
-    // Si es un gasto, también actualizamos el saldo del banco (restamos)
-    if (isExpense) {
-      await prisma.globalSettings.update({
-        where: { id: 'global' },
-        data: { bankBalance: { decrement: body.amount } }
-      });
-    } else {
-      // Si es una venta, sumamos al saldo
-      await prisma.globalSettings.update({
-        where: { id: 'global' },
-        data: { bankBalance: { increment: body.amount } }
-      });
-    }
+    if (affectBank) {
+      // Si es un gasto, también actualizamos el saldo del banco (restamos)
+      if (isExpense) {
+        await prisma.globalSettings.update({
+          where: { id: 'global' },
+          data: { bankBalance: { decrement: body.amount } }
+        });
+      } else {
+        // Si es una venta, sumamos al saldo
+        await prisma.globalSettings.update({
+          where: { id: 'global' },
+          data: { bankBalance: { increment: body.amount } }
+        });
+      }
 
-    // Crear el movimiento bancario correspondiente
-    await prisma.bankMovement.create({
+      // Crear el movimiento bancario correspondiente
+      await prisma.bankMovement.create({
       data: {
         date: body.date,
         concept: isExpense 
@@ -199,6 +201,7 @@ app.post('/api/invoices', async (request, response) => {
         status: 'conciliado'
       }
     });
+    }
 
     const mappedItem = {
       ...newItem,

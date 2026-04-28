@@ -28,6 +28,7 @@ export default function ExpenseInvoicesPage() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [addMode, setAddMode] = useState<'file' | 'manual'>('file');
+  const [affectBank, setAffectBank] = useState(true);
   const [editingRow, setEditingRow] = useState<ExpenseInvoice | null>(null);
   
   const [manualExpense, setManualExpense] = useState({ issuer: '', invoiceNumber: '', date: '', category: 'Servicios y Materiales Indirectos', subtotal: 0, iva: 0, amount: 0 });
@@ -47,13 +48,15 @@ export default function ExpenseInvoicesPage() {
           iva: manualExpense.iva,
           category: manualExpense.category,
           source: 'Registro Manual',
-          status: 'confirmado'
+          status: 'confirmado',
+          affectBank
         })
       });
       
       setInvoices(prev => [newInvoice, ...prev]);
       setAddModalOpen(false);
       setAddMode('file');
+      setAffectBank(true);
       setManualExpense({ issuer: '', invoiceNumber: '', date: '', category: 'Servicios y Materiales Indirectos', subtotal: 0, iva: 0, amount: 0 });
     } catch (error) {
       alert('Error al guardar la compra en el servidor');
@@ -128,7 +131,8 @@ export default function ExpenseInvoicesPage() {
           invoiceNumber: parsed.folio,
           amount: parsed.total,
           category: parsed.expenseType,
-          source: 'XML / PDF'
+          source: 'XML / PDF',
+          affectBank
         })
       });
       
@@ -194,6 +198,18 @@ export default function ExpenseInvoicesPage() {
         description="Registra una nueva compra en el sistema."
         size="lg"
       >
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', padding: '10px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+          <input 
+            type="checkbox" 
+            checked={affectBank} 
+            onChange={(e) => setAffectBank(e.target.checked)} 
+            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+          />
+          <span style={{ fontSize: '0.95rem', fontWeight: 500, color: '#334155' }}>
+             🏦 Afectar cuenta de Banco (Sumar/Restar saldo y registrar movimiento)
+          </span>
+        </label>
+
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>
           <button 
             type="button" 

@@ -13,6 +13,7 @@ export default function SalesListPage() {
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [addMode, setAddMode] = useState<'file' | 'manual'>('file');
+  const [affectBank, setAffectBank] = useState(true);
   const [editingRow, setEditingRow] = useState<SalesInvoice | null>(null);
 
   const [manualSale, setManualSale] = useState({ customer: '', invoiceNumber: '', date: '', paymentMethod: 'PUE - Pago en una sola exhibición', subtotal: 0, iva: 0, amount: 0 });
@@ -33,13 +34,15 @@ export default function SalesListPage() {
           paymentMethod: manualSale.paymentMethod,
           category: 'Ventas',
           source: 'Registro Manual',
-          status: 'confirmado'
+          status: 'confirmado',
+          affectBank
         })
       });
       
       setSales(prev => [newInvoice, ...prev]);
       setAddModalOpen(false);
       setAddMode('file');
+      setAffectBank(true);
       setManualSale({ customer: '', invoiceNumber: '', date: '', paymentMethod: 'PUE - Pago en una sola exhibición', subtotal: 0, iva: 0, amount: 0 });
     } catch (error) {
       alert('Error al guardar la venta en el servidor');
@@ -109,12 +112,13 @@ export default function SalesListPage() {
         body: JSON.stringify({
           ...parsed,
           type: 'SALE',
-          customer: parsed.receiver, // En ventas el receptor es el cliente
+          customer: parsed.receiver, 
           invoiceNumber: parsed.folio,
           amount: parsed.total,
           category: 'Ventas',
           source: 'XML / PDF',
-          status: 'confirmado'
+          status: 'confirmado',
+          affectBank
         })
       });
       
@@ -179,6 +183,18 @@ export default function SalesListPage() {
         description="Registra una nueva venta en el sistema."
         size="lg"
       >
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', padding: '10px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+          <input 
+            type="checkbox" 
+            checked={affectBank} 
+            onChange={(e) => setAffectBank(e.target.checked)} 
+            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+          />
+          <span style={{ fontSize: '0.95rem', fontWeight: 500, color: '#334155' }}>
+             🏦 Afectar cuenta de Banco (Sumar/Restar saldo y registrar movimiento)
+          </span>
+        </label>
+
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>
           <button 
             type="button" 
