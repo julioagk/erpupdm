@@ -26,6 +26,12 @@ const navigation = [
     matchPrefix: '/proveedores-gastos'
   },
   {
+    href: '/gastos-operacion',
+    title: 'Gastos de Operación',
+    hint: 'Administrativos y fijos',
+    matchPrefix: '/gastos-operacion'
+  },
+  {
     href: '/ventas/listado',
     title: 'Ventas',
     hint: 'Ingresos y clientes',
