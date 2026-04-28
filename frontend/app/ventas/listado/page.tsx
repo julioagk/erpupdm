@@ -12,7 +12,39 @@ export default function SalesListPage() {
   const [sales, setSales] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [addMode, setAddMode] = useState<'file' | 'manual'>('file');
   const [editingRow, setEditingRow] = useState<SalesInvoice | null>(null);
+
+  const [manualSale, setManualSale] = useState({ customer: '', invoiceNumber: '', date: '', paymentMethod: 'PUE - Pago en una sola exhibición', subtotal: 0, iva: 0, amount: 0 });
+
+  async function handleSaveManualSale(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const newInvoice = await fetchFromApi('/api/invoices', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'SALE',
+          customer: manualSale.customer,
+          invoiceNumber: manualSale.invoiceNumber,
+          date: manualSale.date ? new Date(manualSale.date).toISOString() : new Date().toISOString(),
+          amount: manualSale.amount,
+          subtotal: manualSale.subtotal,
+          iva: manualSale.iva,
+          paymentMethod: manualSale.paymentMethod,
+          category: 'Ventas',
+          source: 'Registro Manual',
+          status: 'confirmado'
+        })
+      });
+      
+      setSales(prev => [newInvoice, ...prev]);
+      setAddModalOpen(false);
+      setAddMode('file');
+      setManualSale({ customer: '', invoiceNumber: '', date: '', paymentMethod: 'PUE - Pago en una sola exhibición', subtotal: 0, iva: 0, amount: 0 });
+    } catch (error) {
+      alert('Error al guardar la venta en el servidor');
+    }
+  }
 
   useEffect(() => {
     async function loadSales() {
@@ -142,21 +174,84 @@ export default function SalesListPage() {
 
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setAddModalOpen(false)}
+        onClose={() => { setAddModalOpen(false); setAddMode('file'); }}
         title="Registrar Nueva Venta"
-        description="Sube el XML de la factura emitida para guardarla en la base de datos."
+        description="Registra una nueva venta en el sistema."
         size="lg"
       >
-        <InvoiceUploader
-          title="Registrar venta"
-          description="Sube XML para autollenar cliente, folio y montos."
-          actionLabel="Venta"
-          accent="rgba(191, 255, 117, 0.3)"
-          showCategorySelector={false}
-          isSale={true}
-          onParsed={handleConfirmNew}
-        />
-      </Modal>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>
+          <button 
+            type="button" 
+            onClick={() => setAddMode('file')}
+            style={{ padding: '10px 20px', cursor: 'pointer', background: addMode === 'file' ? '#e2e8f0' : '#fff', border: '1px solid var(--line)', borderRadius: '20px' }}
+          >
+            📁 Subir XML
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setAddMode('manual')}
+            style={{ padding: '10px 20px', cursor: 'pointer', background: addMode === 'manual' ? '#e2e8f0' : '#fff', border: '1px solid var(--line)', borderRadius: '20px' }}
+          >
+            ✍️ Registro Manual
+          </button>
+        </div>
+
+        {addMode === 'file' ? (
+          <InvoiceUploader
+            title="Registrar venta"
+            description="Sube XML para autollenar cliente, folio y montos."
+            actionLabel="Venta"
+            accent="rgba(191, 255, 117, 0.3)"
+            showCategorySelector={false}
+            isSale={true}
+            onParsed={handleConfirmNew}
+          />
+        ) : (
+          <form className="stack" onSubmit={handleSaveManualSale} style={{ marginTop: '20px' }}>
+            <label className="form__row">
+              <span className="form__label">Cliente</span>
+              <input required className="form__input" placeholder="Nombre del cliente" value={manualSale.customer} onChange={e => setManualSale({...manualSale, customer: e.target.value})} />
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <label className="form__row">
+                <span className="form__label">Folio</span>
+                <input className="form__input" placeholder="A-1234" value={manualSale.invoiceNumber} onChange={e => setManualSale({...manualSale, invoiceNumber: e.target.value})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">Fecha</span>
+                <input required className="form__input" type="datetime-local" value={manualSale.date} onChange={e => setManualSale({...manualSale, date: e.target.value})} />
+              </label>
+            </div>
+            
+            <label className="form__row">
+              <span className="form__label">Método de Pago</span>
+              <input className="form__input" placeholder="PUE - Pago en una sola exhibición" value={manualSale.paymentMethod} onChange={e => setManualSale({...manualSale, paymentMethod: e.target.value})} />
+            </label>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <label className="form__row">
+                <span className="form__label">Subtotal</span>
+                <input required type="number" step="0.01" className="form__input" value={manualSale.subtotal || ''} onChange={e => {
+                  const sub = parseFloat(e.target.value) || 0;
+                  const iva = parseFloat((sub * 0.16).toFixed(2));
+                  setManualSale({...manualSale, subtotal: sub, iva: iva, amount: parseFloat((sub + iva).toFixed(2))});
+                }} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">IVA (16%)</span>
+                <input required type="number" step="0.01" className="form__input" value={manualSale.iva || ''} onChange={e => setManualSale({...manualSale, iva: parseFloat(e.target.value) || 0, amount: parseFloat((manualSale.subtotal + (parseFloat(e.target.value) || 0)).toFixed(2))})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">Total</span>
+                <input required type="number" step="0.01" className="form__input" value={manualSale.amount || ''} onChange={e => setManualSale({...manualSale, amount: parseFloat(e.target.value) || 0})} />
+              </label>
+            </div>
+            <div className="form__actions" style={{ marginTop: '20px', display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
+              <button type="button" className="button button--secondary" onClick={() => { setAddModalOpen(false); setAddMode('file'); }}>Cancelar</button>
+              <button type="submit" className="button button--primary">Registrar Venta</button>
+            </div>
+          </form>
+        )}
 
       <Modal
         isOpen={!!editingRow}

@@ -27,7 +27,38 @@ export default function ExpenseInvoicesPage() {
   const [invoices, setInvoices] = useState<ExpenseInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [addMode, setAddMode] = useState<'file' | 'manual'>('file');
   const [editingRow, setEditingRow] = useState<ExpenseInvoice | null>(null);
+  
+  const [manualExpense, setManualExpense] = useState({ issuer: '', invoiceNumber: '', date: '', category: 'Servicios y Materiales Indirectos', subtotal: 0, iva: 0, amount: 0 });
+
+  async function handleSaveManualExpense(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const newInvoice = await fetchFromApi('/api/invoices', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'EXPENSE',
+          issuer: manualExpense.issuer,
+          invoiceNumber: manualExpense.invoiceNumber,
+          date: manualExpense.date ? new Date(manualExpense.date).toISOString() : new Date().toISOString(),
+          amount: manualExpense.amount,
+          subtotal: manualExpense.subtotal,
+          iva: manualExpense.iva,
+          category: manualExpense.category,
+          source: 'Registro Manual',
+          status: 'confirmado'
+        })
+      });
+      
+      setInvoices(prev => [newInvoice, ...prev]);
+      setAddModalOpen(false);
+      setAddMode('file');
+      setManualExpense({ issuer: '', invoiceNumber: '', date: '', category: 'Servicios y Materiales Indirectos', subtotal: 0, iva: 0, amount: 0 });
+    } catch (error) {
+      alert('Error al guardar la compra en el servidor');
+    }
+  }
 
   // Cargar datos reales de Railway
   useEffect(() => {
@@ -158,19 +189,84 @@ export default function ExpenseInvoicesPage() {
       {/* ── Modal: Agregar ── */}
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setAddModalOpen(false)}
+        onClose={() => { setAddModalOpen(false); setAddMode('file'); }}
         title="Nueva compra"
-        description="Sube tu XML o PDF para guardar la compra en Railway."
+        description="Registra una nueva compra en el sistema."
         size="lg"
       >
-        <InvoiceUploader
-          title="Agregar compra"
-          description="Sube XML o PDF para registrar emisor, folio, subtotal, IVA, total y tipo de gasto."
-          actionLabel="Compra"
-          accent="rgba(139, 195, 74, 0.18)"
-          onParsed={handleConfirmNew}
-        />
-      </Modal>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>
+          <button 
+            type="button" 
+            onClick={() => setAddMode('file')}
+            style={{ padding: '10px 20px', cursor: 'pointer', background: addMode === 'file' ? '#e2e8f0' : '#fff', border: '1px solid var(--line)', borderRadius: '20px' }}
+          >
+            📁 Subir Archivo (XML/PDF)
+          </button>
+          <button 
+            type="button" 
+            onClick={() => setAddMode('manual')}
+            style={{ padding: '10px 20px', cursor: 'pointer', background: addMode === 'manual' ? '#e2e8f0' : '#fff', border: '1px solid var(--line)', borderRadius: '20px' }}
+          >
+            ✍️ Registro Manual
+          </button>
+        </div>
+
+        {addMode === 'file' ? (
+          <InvoiceUploader
+            title="Agregar compra"
+            description="Sube XML o PDF para registrar emisor, folio, subtotal, IVA, total y tipo de gasto."
+            actionLabel="Compra"
+            accent="rgba(139, 195, 74, 0.18)"
+            onParsed={handleConfirmNew}
+          />
+        ) : (
+          <form className="stack" onSubmit={handleSaveManualExpense} style={{ marginTop: '20px' }}>
+            <label className="form__row">
+              <span className="form__label">Emisor / Proveedor</span>
+              <input required className="form__input" placeholder="Nombre de la empresa" value={manualExpense.issuer} onChange={e => setManualExpense({...manualExpense, issuer: e.target.value})} />
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <label className="form__row">
+                <span className="form__label">Folio</span>
+                <input className="form__input" placeholder="A-1234" value={manualExpense.invoiceNumber} onChange={e => setManualExpense({...manualExpense, invoiceNumber: e.target.value})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">Fecha</span>
+                <input required className="form__input" type="datetime-local" value={manualExpense.date} onChange={e => setManualExpense({...manualExpense, date: e.target.value})} />
+              </label>
+            </div>
+            
+            <label className="form__row">
+              <span className="form__label">Categoría de Gasto</span>
+              <select className="form__select" value={manualExpense.category} onChange={e => setManualExpense({...manualExpense, category: e.target.value})}>
+                {expenseTypeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            </label>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+              <label className="form__row">
+                <span className="form__label">Subtotal</span>
+                <input required type="number" step="0.01" className="form__input" value={manualExpense.subtotal || ''} onChange={e => {
+                  const sub = parseFloat(e.target.value) || 0;
+                  const iva = parseFloat((sub * 0.16).toFixed(2));
+                  setManualExpense({...manualExpense, subtotal: sub, iva: iva, amount: parseFloat((sub + iva).toFixed(2))});
+                }} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">IVA (16%)</span>
+                <input required type="number" step="0.01" className="form__input" value={manualExpense.iva || ''} onChange={e => setManualExpense({...manualExpense, iva: parseFloat(e.target.value) || 0, amount: parseFloat((manualExpense.subtotal + (parseFloat(e.target.value) || 0)).toFixed(2))})} />
+              </label>
+              <label className="form__row">
+                <span className="form__label">Total</span>
+                <input required type="number" step="0.01" className="form__input" value={manualExpense.amount || ''} onChange={e => setManualExpense({...manualExpense, amount: parseFloat(e.target.value) || 0})} />
+              </label>
+            </div>
+            <div className="form__actions" style={{ marginTop: '20px', display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
+              <button type="button" className="button button--secondary" onClick={() => { setAddModalOpen(false); setAddMode('file'); }}>Cancelar</button>
+              <button type="submit" className="button button--primary">Registrar Compra</button>
+            </div>
+          </form>
+        )}
 
       {/* ── Modal: Editar ── */}
       <Modal
