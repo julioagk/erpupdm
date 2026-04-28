@@ -267,6 +267,7 @@ export default function ExpenseInvoicesPage() {
             </div>
           </form>
         )}
+      </Modal>
 
       {/* ── Modal: Editar ── */}
       <Modal

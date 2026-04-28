@@ -252,6 +252,7 @@ export default function SalesListPage() {
             </div>
           </form>
         )}
+      </Modal>
 
       <Modal
         isOpen={!!editingRow}
