@@ -192,6 +192,12 @@ app.post('/api/invoices', async (request, response) => {
 
     await ensureSettings();
 
+    // Si no hay folio, generar uno único para evitar conflicto de unicidad (P2002)
+    const prefix = isExpense ? 'EXP' : 'VTA';
+    const uniqueFolio = body.invoiceNumber && String(body.invoiceNumber).trim()
+      ? String(body.invoiceNumber).trim()
+      : `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
     const newItem = await prisma.invoice.create({
       data: {
         date: body.date,
@@ -200,7 +206,7 @@ app.post('/api/invoices', async (request, response) => {
         iva: body.iva || 0,
         category: body.category || 'Sin categoría',
         source: body.source || 'Manual',
-        invoiceNumber: body.invoiceNumber,
+        invoiceNumber: uniqueFolio,
         description: body.description || '',
         type: body.type,
         providerName: isExpense ? body.issuer : null,
