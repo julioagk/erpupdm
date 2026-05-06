@@ -31,7 +31,7 @@ model Invoice {
   iva           Float
   category      String
   source        String?
-  invoiceNumber String      @unique
+  invoiceNumber String
   description   String?
   type          InvoiceType
   bankAccount   String      @default("banorte") // 'banorte' | 'bbva'
