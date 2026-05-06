@@ -64,7 +64,8 @@ export function WorkspaceShell({
   eyebrow: string;
   children: React.ReactNode;
 }>) {
-  const { bankBalance: balance, setBankBalance: setBalance } = useBalance();
+  const { bankBalance, bbvaBalance, setBankBalance: setBalance } = useBalance();
+  const balance = bankBalance + bbvaBalance;
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [userName, setUserName] = useState('Julio');
@@ -135,7 +136,7 @@ export function WorkspaceShell({
 
           {/* Saldo en banco — editable */}
           <div className="shell__balanceWidget">
-            <p className="shell__balanceLabel">Saldo Banorte</p>
+            <p className="shell__balanceLabel">Saldo Total</p>
             {editing ? (
               <div className="shell__balanceEditGroup">
                 <input
