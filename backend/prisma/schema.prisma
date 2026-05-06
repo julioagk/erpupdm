@@ -34,6 +34,7 @@ model Invoice {
   invoiceNumber String      @unique
   description   String?
   type          InvoiceType
+  bankAccount   String      @default("banorte") // 'banorte' | 'bbva'
   
   // Para Compras
   providerId    String?
@@ -50,17 +51,21 @@ model Invoice {
 }
 
 model BankMovement {
-  id        String   @id @default(uuid())
-  date      String   // Formato YYYY-MM-DD
-  concept   String
-  amount    Float
-  kind      String   // 'ingreso' or 'egreso'
-  source    String
-  status    String   // 'conciliado' or 'pendiente'
-  createdAt DateTime @default(now())
+  id          String   @id @default(uuid())
+  date        String   // Formato YYYY-MM-DD
+  concept     String
+  amount      Float
+  kind        String   // 'ingreso' or 'egreso'
+  source      String
+  status      String   // 'conciliado' or 'pendiente'
+  bankAccount String   @default("banorte") // 'banorte' | 'bbva'
+  createdAt   DateTime @default(now())
 }
 
 model GlobalSettings {
-  id          String   @id @default("global")
-  bankBalance Float    @default(0)
+  id             String   @id @default("global")
+  bankBalance    Float    @default(0)
+  bbvaBalance    Float    @default(0)
+  banorteAlias   String   @default("Banorte")
+  bbvaAlias      String   @default("BBVA")
 }

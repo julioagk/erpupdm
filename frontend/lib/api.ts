@@ -4,7 +4,6 @@ const getApiUrl = () => {
   if (url && !url.startsWith('http')) {
     url = `https://${url}`;
   }
-  // Eliminar barra final si existe para evitar dobles barras en concatenación
   return url.replace(/\/$/, '');
 };
 
@@ -45,9 +44,16 @@ export async function parseInvoice(text: string) {
   });
 }
 
-export async function updateBankBalance(balance: number) {
+export async function updateBankBalance(balance: number, bbvaBalance?: number) {
   return fetchFromApi('/api/bank/balance', {
     method: 'POST',
-    body: JSON.stringify({ balance }),
+    body: JSON.stringify({ balance, bbvaBalance }),
+  });
+}
+
+export async function updateBankAliases(banorteAlias: string, bbvaAlias: string) {
+  return fetchFromApi('/api/bank/aliases', {
+    method: 'POST',
+    body: JSON.stringify({ banorteAlias, bbvaAlias }),
   });
 }

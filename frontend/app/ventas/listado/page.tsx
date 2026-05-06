@@ -7,6 +7,7 @@ import { Modal } from '@/components/modal';
 import { InvoiceUploader } from '@/components/invoice-uploader';
 import { money, type SalesInvoice } from '@/lib/data';
 import { fetchFromApi } from '@/lib/api';
+import { useBalance } from '@/context/balance-context';
 
 export default function SalesListPage() {
   const [sales, setSales] = useState<SalesInvoice[]>([]);
@@ -14,7 +15,9 @@ export default function SalesListPage() {
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [addMode, setAddMode] = useState<'file' | 'manual'>('file');
   const [affectBank, setAffectBank] = useState(true);
+  const [bankAccount, setBankAccount] = useState<'banorte' | 'bbva'>('banorte');
   const [editingRow, setEditingRow] = useState<SalesInvoice | null>(null);
+  const { banorteAlias, bbvaAlias } = useBalance();
 
   const [manualSale, setManualSale] = useState({ customer: '', invoiceNumber: '', date: '', paymentMethod: 'PUE - Pago en una sola exhibición', subtotal: 0, iva: 0, amount: 0 });
 
@@ -35,7 +38,8 @@ export default function SalesListPage() {
           category: 'Ventas',
           source: 'Registro Manual',
           status: 'confirmado',
-          affectBank
+          affectBank,
+          bankAccount
         })
       });
       
@@ -43,6 +47,7 @@ export default function SalesListPage() {
       setAddModalOpen(false);
       setAddMode('file');
       setAffectBank(true);
+      setBankAccount('banorte');
       setManualSale({ customer: '', invoiceNumber: '', date: '', paymentMethod: 'PUE - Pago en una sola exhibición', subtotal: 0, iva: 0, amount: 0 });
     } catch (error) {
       alert('Error al guardar la venta en el servidor');
@@ -118,7 +123,8 @@ export default function SalesListPage() {
           category: 'Ventas',
           source: 'XML / PDF',
           status: 'confirmado',
-          affectBank
+          affectBank,
+          bankAccount
         })
       });
       
@@ -183,17 +189,34 @@ export default function SalesListPage() {
         description="Registra una nueva venta en el sistema."
         size="lg"
       >
-        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px', padding: '10px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
-          <input 
-            type="checkbox" 
-            checked={affectBank} 
-            onChange={(e) => setAffectBank(e.target.checked)} 
-            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-          />
-          <span style={{ fontSize: '0.95rem', fontWeight: 500, color: '#334155' }}>
-             🏦 Afectar cuenta de Banco (Sumar/Restar saldo y registrar movimiento)
-          </span>
-        </label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+            <input 
+              type="checkbox" 
+              checked={affectBank} 
+              onChange={(e) => setAffectBank(e.target.checked)} 
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '0.95rem', fontWeight: 500, color: '#334155' }}>
+               🏦 Afectar cuenta de Banco (Registrar movimiento)
+            </span>
+          </label>
+          {affectBank && (
+            <div style={{ padding: '12px 14px', background: '#f1f5f9', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <p style={{ margin: '0 0 8px', fontSize: '0.82rem', fontWeight: 600, color: '#64748b' }}>💳 ¿A qué cuenta entra el dinero?</p>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1, padding: '8px 14px', borderRadius: '8px', border: `2px solid ${bankAccount === 'banorte' ? '#0d9488' : '#e2e8f0'}`, background: bankAccount === 'banorte' ? 'rgba(13,148,136,0.06)' : '#fff', transition: 'all 0.2s' }}>
+                  <input type="radio" name="bankAccount-sale" value="banorte" checked={bankAccount === 'banorte'} onChange={() => setBankAccount('banorte')} style={{ accentColor: '#0d9488' }} />
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: bankAccount === 'banorte' ? '#0d9488' : '#334155' }}>🏦 {banorteAlias}</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flex: 1, padding: '8px 14px', borderRadius: '8px', border: `2px solid ${bankAccount === 'bbva' ? '#1d4ed8' : '#e2e8f0'}`, background: bankAccount === 'bbva' ? 'rgba(29,78,216,0.06)' : '#fff', transition: 'all 0.2s' }}>
+                  <input type="radio" name="bankAccount-sale" value="bbva" checked={bankAccount === 'bbva'} onChange={() => setBankAccount('bbva')} style={{ accentColor: '#1d4ed8' }} />
+                  <span style={{ fontSize: '0.88rem', fontWeight: 600, color: bankAccount === 'bbva' ? '#1d4ed8' : '#334155' }}>🏛️ {bbvaAlias}</span>
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>
           <button 

@@ -1,46 +1,82 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { dashboardSeed } from '@/lib/data';
-import { fetchFromApi, updateBankBalance as syncBalanceToApi } from '@/lib/api';
+import { fetchFromApi, updateBankBalance as syncBalanceToApi, updateBankAliases } from '@/lib/api';
 
 interface BalanceContextType {
   bankBalance: number;
+  bbvaBalance: number;
+  banorteAlias: string;
+  bbvaAlias: string;
   setBankBalance: (balance: number) => void;
+  setBbvaBalance: (balance: number) => void;
+  setAliases: (banorteAlias: string, bbvaAlias: string) => Promise<void>;
   refreshBalance: () => Promise<void>;
 }
 
 const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
 
 export function BalanceProvider({ children }: { children: React.ReactNode }) {
-  const [bankBalance, setBankBalance] = useState<number>(0);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [bankBalance, setBankBalanceState] = useState<number>(0);
+  const [bbvaBalance, setBbvaBalanceState] = useState<number>(0);
+  const [banorteAlias, setBanorteAlias] = useState('Banorte');
+  const [bbvaAlias, setBbvaAlias] = useState('BBVA');
 
   const refreshBalance = async () => {
     try {
       const data = await fetchFromApi('/api/bank');
-      setBankBalance(data.balance);
+      setBankBalanceState(data.balance ?? 0);
+      setBbvaBalanceState(data.bbvaBalance ?? 0);
+      setBanorteAlias(data.banorteAlias || 'Banorte');
+      setBbvaAlias(data.bbvaAlias || 'BBVA');
     } catch (error) {
       console.error('Error al sincronizar saldo:', error);
     }
   };
 
-  // Sincronización inicial
   useEffect(() => {
-    refreshBalance().then(() => setIsLoaded(true));
+    refreshBalance();
   }, []);
 
-  const updateBalance = async (newBalance: number) => {
-    setBankBalance(newBalance);
+  const setBankBalance = async (newBalance: number) => {
+    setBankBalanceState(newBalance);
     try {
-      await syncBalanceToApi(newBalance);
+      await syncBalanceToApi(newBalance, bbvaBalance);
     } catch (error) {
-      console.error('Error al persistir saldo en API:', error);
+      console.error('Error al persistir saldo Banorte:', error);
+    }
+  };
+
+  const setBbvaBalance = async (newBalance: number) => {
+    setBbvaBalanceState(newBalance);
+    try {
+      await syncBalanceToApi(bankBalance, newBalance);
+    } catch (error) {
+      console.error('Error al persistir saldo BBVA:', error);
+    }
+  };
+
+  const setAliases = async (newBanorteAlias: string, newBbvaAlias: string) => {
+    try {
+      await updateBankAliases(newBanorteAlias, newBbvaAlias);
+      setBanorteAlias(newBanorteAlias);
+      setBbvaAlias(newBbvaAlias);
+    } catch (error) {
+      console.error('Error al actualizar alias:', error);
     }
   };
 
   return (
-    <BalanceContext.Provider value={{ bankBalance, setBankBalance: updateBalance, refreshBalance }}>
+    <BalanceContext.Provider value={{
+      bankBalance,
+      bbvaBalance,
+      banorteAlias,
+      bbvaAlias,
+      setBankBalance,
+      setBbvaBalance,
+      setAliases,
+      refreshBalance
+    }}>
       {children}
     </BalanceContext.Provider>
   );
