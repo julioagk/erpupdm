@@ -149,18 +149,32 @@ export function WorkspaceShell({
                           key={sub.href}
                           href={sub.href}
                           style={{
-                            display: 'block',
-                            padding: '7px 14px',
-                            borderRadius: '10px',
-                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.82rem',
                             fontWeight: active === sub.href ? 700 : 500,
-                            color: active === sub.href ? 'var(--accent, #0d9488)' : '#64748b',
-                            background: active === sub.href ? 'rgba(13,148,136,0.08)' : 'transparent',
+                            color: active === sub.href ? 'var(--primary-strong)' : 'var(--muted)',
+                            background: active === sub.href ? 'var(--accent-soft)' : 'transparent',
                             textDecoration: 'none',
-                            borderLeft: `2px solid ${active === sub.href ? 'var(--accent, #0d9488)' : '#e2e8f0'}`,
-                            transition: 'all 0.15s'
+                            position: 'relative',
+                            transition: 'all 0.2s ease',
+                            marginLeft: '8px'
                           }}
                         >
+                          {active === sub.href && (
+                            <div style={{
+                              position: 'absolute',
+                              left: '-12px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              width: '4px',
+                              height: '4px',
+                              borderRadius: '50%',
+                              background: 'var(--primary-strong)'
+                            }} />
+                          )}
                           {sub.label}
                         </Link>
                       ))}
