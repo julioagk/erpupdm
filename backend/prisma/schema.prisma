@@ -46,6 +46,7 @@ model Invoice {
   paymentMethod String?
   status        String?     // 'confirmado', 'pendiente', etc.
   pdfData       String?     // Archivo PDF codificado en Base64
+  dueDate       DateTime?   // Fecha límite para PPD (opcional)
   
   createdAt     DateTime    @default(now())
 }

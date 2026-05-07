@@ -23,7 +23,11 @@ const navigation = [
     href: '/proveedores-gastos/facturas-gastos',
     title: 'Compras',
     hint: 'Egresos y facturas',
-    matchPrefix: '/proveedores-gastos'
+    matchPrefix: '/proveedores-gastos',
+    subItems: [
+      { href: '/proveedores-gastos/facturas-gastos', label: 'Compras registradas' },
+      { href: '/proveedores-gastos/cuentas-por-pagar', label: 'Cuentas por Pagar' }
+    ]
   },
   {
     href: '/gastos-operacion',
@@ -35,7 +39,11 @@ const navigation = [
     href: '/ventas/listado',
     title: 'Ventas',
     hint: 'Ingresos y clientes',
-    matchPrefix: '/ventas'
+    matchPrefix: '/ventas',
+    subItems: [
+      { href: '/ventas/listado', label: 'Ventas registradas' },
+      { href: '/ventas/cuentas-por-cobrar', label: 'Cuentas por Cobrar' }
+    ]
   },
   {
     href: '/contabilidad/estado-resultados',
@@ -50,6 +58,7 @@ const navigation = [
     matchPrefix: '/configuracion'
   }
 ];
+
 
 export function WorkspaceShell({
   active,
@@ -119,19 +128,47 @@ export function WorkspaceShell({
           </div>
 
           <nav className="shell__nav" aria-label="Navegación principal">
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`shell__navLink ${isActiveNavItem(item.href, item.matchPrefix) ? 'shell__navLink--active' : ''}`}
-              >
-                <span className="shell__navLabel">
-                  <span className="shell__navTitle">{item.title}</span>
-                  <span className="shell__navHint">{item.hint}</span>
-                </span>
-                <span aria-hidden="true">→</span>
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              const isActive = isActiveNavItem(item.href, item.matchPrefix);
+              return (
+                <div key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`shell__navLink ${isActive ? 'shell__navLink--active' : ''}`}
+                  >
+                    <span className="shell__navLabel">
+                      <span className="shell__navTitle">{item.title}</span>
+                      <span className="shell__navHint">{item.hint}</span>
+                    </span>
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                  {isActive && item.subItems && (
+                    <div style={{ paddingLeft: '16px', marginTop: '2px', marginBottom: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      {item.subItems.map(sub => (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          style={{
+                            display: 'block',
+                            padding: '7px 14px',
+                            borderRadius: '10px',
+                            fontSize: '0.8rem',
+                            fontWeight: active === sub.href ? 700 : 500,
+                            color: active === sub.href ? 'var(--accent, #0d9488)' : '#64748b',
+                            background: active === sub.href ? 'rgba(13,148,136,0.08)' : 'transparent',
+                            textDecoration: 'none',
+                            borderLeft: `2px solid ${active === sub.href ? 'var(--accent, #0d9488)' : '#e2e8f0'}`,
+                            transition: 'all 0.15s'
+                          }}
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
 
           {/* Saldo en banco — editable */}

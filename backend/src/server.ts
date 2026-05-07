@@ -181,6 +181,97 @@ app.get('/api/sales', async (_request, response) => {
 });
 
 // ──────────────────────────────────────────────
+// CUENTAS POR COBRAR (ventas pendientes)
+// ──────────────────────────────────────────────
+app.get('/api/receivables', async (_request, response) => {
+  try {
+    const items = await prisma.invoice.findMany({
+      where: { type: 'SALE', status: 'pendiente' },
+      select: {
+        id: true, date: true, amount: true, subtotal: true, iva: true,
+        category: true, source: true, invoiceNumber: true, description: true,
+        type: true, providerName: true, customerName: true,
+        paymentMethod: true, status: true, createdAt: true, bankAccount: true,
+        dueDate: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    response.json({ items: items.map(i => ({ ...i, customer: i.customerName })) });
+  } catch (error) {
+    console.error('Error al obtener cuentas por cobrar:', error);
+    response.status(500).json({ error: 'Error al obtener cuentas por cobrar' });
+  }
+});
+
+// ──────────────────────────────────────────────
+// CUENTAS POR PAGAR (compras pendientes)
+// ──────────────────────────────────────────────
+app.get('/api/payables', async (_request, response) => {
+  try {
+    const items = await prisma.invoice.findMany({
+      where: { type: 'EXPENSE', status: 'pendiente' },
+      select: {
+        id: true, date: true, amount: true, subtotal: true, iva: true,
+        category: true, source: true, invoiceNumber: true, description: true,
+        type: true, providerName: true, customerName: true,
+        paymentMethod: true, status: true, createdAt: true, bankAccount: true,
+        dueDate: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    response.json({ items: items.map(i => ({ ...i, issuer: i.providerName })) });
+  } catch (error) {
+    console.error('Error al obtener cuentas por pagar:', error);
+    response.status(500).json({ error: 'Error al obtener cuentas por pagar' });
+  }
+});
+
+// ──────────────────────────────────────────────
+// CONFIRMAR PAGO / COBRO DE FACTURA PENDIENTE
+// ──────────────────────────────────────────────
+app.post('/api/invoices/:id/confirm-payment', async (request, response) => {
+  try {
+    const { bankAccount } = request.body;
+    const account: string = bankAccount || 'banorte';
+
+    const invoice = await prisma.invoice.findUnique({ where: { id: request.params.id } });
+    if (!invoice) return response.status(404).json({ error: 'Factura no encontrada' });
+    if (invoice.status === 'confirmado') return response.status(400).json({ error: 'La factura ya está confirmada' });
+
+    const isExpense = invoice.type === 'EXPENSE';
+
+    // Actualizar estado y asignar cuenta
+    const updated = await prisma.invoice.update({
+      where: { id: request.params.id },
+      data: { status: 'confirmado', bankAccount: account }
+    });
+
+    // Ajustar saldo bancario
+    await adjustBalance(account, !isExpense, invoice.amount);
+
+    // Crear movimiento bancario
+    await prisma.bankMovement.create({
+      data: {
+        date: new Date().toISOString(),
+        concept: isExpense
+          ? `Pago factura ${invoice.invoiceNumber || ''} - ${invoice.providerName || 'Gasto'}`
+          : `Cobro factura ${invoice.invoiceNumber || ''} - ${invoice.customerName || 'Venta'}`,
+        amount: invoice.amount,
+        kind: isExpense ? 'egreso' : 'ingreso',
+        source: invoice.paymentMethod || 'Transferencia',
+        status: 'conciliado',
+        bankAccount: account
+      }
+    });
+
+    response.json({ ...updated, issuer: updated.providerName, customer: updated.customerName });
+  } catch (error) {
+    console.error('Error al confirmar pago:', error);
+    response.status(500).json({ error: 'Error al confirmar pago' });
+  }
+});
+
+// ──────────────────────────────────────────────
 // CREAR FACTURA (con selección de cuenta)
 // ──────────────────────────────────────────────
 app.post('/api/invoices', async (request, response) => {
@@ -214,7 +305,8 @@ app.post('/api/invoices', async (request, response) => {
         paymentMethod: body.paymentMethod || null,
         status: body.status || 'confirmado',
         pdfData: body.pdfData || null,
-        bankAccount
+        bankAccount,
+        dueDate: body.dueDate ? new Date(body.dueDate) : null
       }
     });
 
