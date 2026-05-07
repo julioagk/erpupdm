@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WorkspaceShell } from '@/components/workspace-shell';
 import { Modal } from '@/components/modal';
+import { InvoiceUploader } from '@/components/invoice-uploader';
 import { money } from '@/lib/data';
 import { fetchFromApi } from '@/lib/api';
 import { useBalance } from '@/context/balance-context';
@@ -89,6 +90,7 @@ export default function CuentasPorPagarPage() {
   const [bankAccount, setBankAccount] = useState<'banorte' | 'bbva'>('banorte');
   const [confirming, setConfirming] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addMode, setAddMode] = useState<'file' | 'manual'>('file');
   const { banorteAlias, bbvaAlias, refreshBalance } = useBalance();
   const [newExpense, setNewExpense] = useState({ issuer: '', invoiceNumber: '', date: '', paymentMethod: 'PUE', category: 'Servicios y Materiales Indirectos', subtotal: 0, iva: 0, amount: 0, dueDate: '' });
 
@@ -135,8 +137,36 @@ export default function CuentasPorPagarPage() {
       });
       setItems(prev => [{ ...created, issuer: created.providerName || created.issuer }, ...prev]);
       setAddModalOpen(false);
+      setAddMode('file');
       setNewExpense({ issuer: '', invoiceNumber: '', date: '', paymentMethod: 'PUE', category: 'Servicios y Materiales Indirectos', subtotal: 0, iva: 0, amount: 0, dueDate: '' });
     } catch { alert('Error al agregar la factura'); }
+  }
+
+  async function handleParsedFile(parsed: any) {
+    try {
+      const created = await fetchFromApi('/api/invoices', {
+        method: 'POST',
+        body: JSON.stringify({
+          type: 'EXPENSE',
+          issuer: parsed.issuer,
+          invoiceNumber: parsed.folio,
+          date: parsed.date ? new Date(parsed.date).toISOString() : new Date().toISOString(),
+          amount: parsed.total,
+          subtotal: parsed.subtotal,
+          iva: parsed.iva,
+          paymentMethod: parsed.paymentMethod || 'PUE - Pago en una sola exhibición',
+          category: parsed.expenseType || 'Servicios y Materiales Indirectos',
+          source: 'XML / PDF',
+          status: 'pendiente',
+          affectBank: false,
+          pdfData: parsed.pdfData || null,
+          dueDate: null
+        })
+      });
+      setItems(prev => [{ ...created, issuer: created.providerName || created.issuer }, ...prev]);
+      setAddModalOpen(false);
+      setAddMode('file');
+    } catch { alert('Error al guardar la factura escaneada'); }
   }
 
   async function handleDelete(item: PendingExpense) {
@@ -270,7 +300,25 @@ export default function CuentasPorPagarPage() {
       </Modal>
 
       {/* Modal agregar */}
-      <Modal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} title="Nueva Cuenta por Pagar" description="No afecta el banco hasta confirmar el pago." size="lg">
+      <Modal isOpen={addModalOpen} onClose={() => { setAddModalOpen(false); setAddMode('file'); }} title="Nueva Cuenta por Pagar" description="No afecta el banco hasta confirmar el pago." size="lg">
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>
+          <button type="button" onClick={() => setAddMode('file')} style={{ padding: '10px 20px', cursor: 'pointer', background: addMode === 'file' ? '#e2e8f0' : '#fff', border: '1px solid var(--line)', borderRadius: '20px', fontWeight: addMode === 'file' ? 700 : 400 }}>📁 Subir XML / PDF</button>
+          <button type="button" onClick={() => setAddMode('manual')} style={{ padding: '10px 20px', cursor: 'pointer', background: addMode === 'manual' ? '#e2e8f0' : '#fff', border: '1px solid var(--line)', borderRadius: '20px', fontWeight: addMode === 'manual' ? 700 : 400 }}>✍️ Registro Manual</button>
+        </div>
+
+        {addMode === 'file' ? (
+          <InvoiceUploader
+            title="Escanear factura por pagar"
+            description="Sube XML o PDF para autollenar emisor, folio, montos y categoría."
+            actionLabel="Por Pagar"
+            accent="rgba(220,38,38,0.18)"
+            showCategorySelector={true}
+            expenseTypeOptions={expenseCategories}
+            isSale={false}
+            onParsed={handleParsedFile}
+          />
+        ) : (
         <form className="stack" onSubmit={handleAddExpense} style={{ marginTop: '10px' }}>
           <label className="form__row"><span className="form__label">Emisor / Proveedor</span><input required className="form__input" placeholder="Nombre del proveedor" value={newExpense.issuer} onChange={e => setNewExpense({ ...newExpense, issuer: e.target.value })} /></label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
@@ -302,10 +350,11 @@ export default function CuentasPorPagarPage() {
             <label className="form__row"><span className="form__label">Total</span><input required type="number" step="0.01" className="form__input" value={newExpense.amount || ''} onChange={e => setNewExpense({ ...newExpense, amount: parseFloat(e.target.value) || 0 })} /></label>
           </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <button type="button" className="button button--secondary" onClick={() => setAddModalOpen(false)}>Cancelar</button>
+            <button type="button" className="button button--secondary" onClick={() => { setAddModalOpen(false); setAddMode('file'); }}>Cancelar</button>
             <button type="submit" className="button button--primary">Registrar Cuenta por Pagar</button>
           </div>
         </form>
+        )}
       </Modal>
     </WorkspaceShell>
   );
