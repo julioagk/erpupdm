@@ -153,7 +153,7 @@ export default function CuentasPorCobrarPage() {
           status: 'pendiente',
           affectBank: false,
           pdfData: parsed.pdfData || null,
-          dueDate: null
+          dueDate: parsed.dueDate || null
         })
       });
       setItems(prev => [{ ...created, customer: created.customerName || created.customer }, ...prev]);

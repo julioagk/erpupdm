@@ -160,7 +160,7 @@ export default function CuentasPorPagarPage() {
           status: 'pendiente',
           affectBank: false,
           pdfData: parsed.pdfData || null,
-          dueDate: null
+          dueDate: parsed.dueDate || null
         })
       });
       setItems(prev => [{ ...created, issuer: created.providerName || created.issuer }, ...prev]);

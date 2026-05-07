@@ -16,6 +16,7 @@ type EditableInvoice = {
   paymentMethod: string;
   expenseType: string;
   pdfData?: string;
+  dueDate?: string;
 };
 
 export function InvoiceUploader({
@@ -241,12 +242,19 @@ export function InvoiceUploader({
                   <span className="form__label">Fecha y Hora</span>
                   <input className="form__input" type="datetime-local" value={fields.date} onChange={e => setField('date', e.target.value)} />
                 </label>
-                
-                {isSale && (
-                  <label className="form__row">
-                    <span className="form__label">Método de Pago</span>
-                    <input className="form__input" value={fields.paymentMethod || 'PUE - Pago en una sola exhibición'} onChange={e => setField('paymentMethod', e.target.value)} />
-                  </label>
+                <label className="form__row" style={{ gridColumn: showCategorySelector ? '1' : 'span 2' }}>
+                  <span className="form__label">Método de Pago</span>
+                  <select className="form__select" value={fields.paymentMethod?.includes('PPD') ? 'PPD' : 'PUE'} onChange={e => setField('paymentMethod', e.target.value === 'PPD' ? 'PPD - Pago en parcialidades o diferido' : 'PUE - Pago en una sola exhibición')}>
+                    <option value="PUE">PUE — Pago en una sola exhibición</option>
+                    <option value="PPD">PPD — Pago en parcialidades o diferido</option>
+                  </select>
+                </label>
+
+                {fields.paymentMethod?.includes('PPD') && (
+                  <div style={{ gridColumn: showCategorySelector ? '2' : 'span 2', background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: '12px', padding: '14px 16px' }}>
+                    <p style={{ margin: '0 0 8px', fontSize: '0.82rem', fontWeight: 700, color: '#6d28d9' }}>📅 Fecha límite PPD <span style={{ fontWeight: 400, color: '#8b5cf6' }}>(opcional)</span></p>
+                    <input className="form__input" type="date" value={fields.dueDate || ''} onChange={e => setField('dueDate', e.target.value)} style={{ borderColor: 'rgba(124,58,237,0.3)' }} />
+                  </div>
                 )}
                 
                 {showCategorySelector && (
