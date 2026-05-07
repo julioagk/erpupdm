@@ -7,7 +7,7 @@ import { useBalance } from '@/context/balance-context';
 import { getDashboardData, getAccountingData } from '@/lib/api';
 
 export default function DashboardPage() {
-  const { bankBalance, setBankBalance } = useBalance();
+  const { bankBalance, setBankBalance, bbvaBalance, banorteAlias, bbvaAlias } = useBalance();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [accounting, setAccounting] = useState<any>(null);
@@ -159,26 +159,37 @@ export default function DashboardPage() {
         <article className="card dashboard__bankPanel">
           <div className="card__header">
             <div>
-              <h3 className="card__title">Caja de Banco</h3>
-              <p className="card__label">Saldo real en Banorte (vía API).</p>
+              <h3 className="card__title">Caja de Bancos</h3>
+              <p className="card__label">Saldos reales de las cuentas (vía API).</p>
             </div>
             <span className="badge badge--success">En línea</span>
           </div>
 
           <div className="card__body stack">
             <div>
-              <p className="dashboard__bigLabel">Saldo disponible</p>
-              <div className="dashboard__bigAmount">{money(bankBalance)}</div>
-              <p className="footer-note">Estado de cuenta actualizado según el último reporte del backend.</p>
+              <p className="dashboard__bigLabel">Saldo Total Disponible</p>
+              <div className="dashboard__bigAmount">{money(bankBalance + bbvaBalance)}</div>
+              <p className="footer-note">Suma del estado de cuenta de todos los bancos.</p>
             </div>
 
-            <div className="dashboard__bankMeter" aria-hidden="true">
-              <div className="dashboard__bankMeterFill" style={{ width: `${Math.min(100, Math.round((bankBalance / 250000) * 100))}%` }} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '10px' }}>
+              <div style={{ padding: '12px', background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.2)', borderRadius: '12px' }}>
+                <p style={{ margin: '0 0 4px', fontSize: '0.75rem', fontWeight: 700, color: '#0d9488', textTransform: 'uppercase' }}>🏦 {banorteAlias}</p>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)' }}>{money(bankBalance)}</div>
+              </div>
+              <div style={{ padding: '12px', background: 'rgba(29,78,216,0.06)', border: '1px solid rgba(29,78,216,0.2)', borderRadius: '12px' }}>
+                <p style={{ margin: '0 0 4px', fontSize: '0.75rem', fontWeight: 700, color: '#1d4ed8', textTransform: 'uppercase' }}>🏛️ {bbvaAlias}</p>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)' }}>{money(bbvaBalance)}</div>
+              </div>
+            </div>
+
+            <div className="dashboard__bankMeter" aria-hidden="true" style={{ marginTop: '8px' }}>
+              <div className="dashboard__bankMeterFill" style={{ width: `${Math.min(100, Math.round(((bankBalance + bbvaBalance) / 500000) * 100))}%` }} />
             </div>
 
             <div className="chip-row">
-              <span className="chip">Banco: Banorte</span>
               <span className="chip">Estado: Sincronizado</span>
+              <span className="chip">2 Cuentas</span>
             </div>
           </div>
         </article>
