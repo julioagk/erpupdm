@@ -208,8 +208,15 @@ app.get('/api/receivables', async (_request, response) => {
 // ──────────────────────────────────────────────
 app.get('/api/payables', async (_request, response) => {
   try {
+    const source = typeof _request.query.source === 'string' ? _request.query.source : undefined;
+    const where: any = { type: 'EXPENSE', status: 'pendiente' };
+
+    if (source) {
+      where.source = source;
+    }
+
     const items = await prisma.invoice.findMany({
-      where: { type: 'EXPENSE', status: 'pendiente' },
+      where,
       select: {
         id: true, date: true, amount: true, subtotal: true, iva: true,
         category: true, source: true, invoiceNumber: true, description: true,

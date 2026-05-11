@@ -106,7 +106,7 @@ export default function CuentasPorPagarOperacionalPage() {
 
   const load = useCallback(async () => {
     try {
-      const data = await fetchFromApi('/api/payables?type=OPERATIONAL_EXPENSE');
+      const data = await fetchFromApi('/api/payables?source=Cuenta%20por%20Pagar%20Operacional');
       setItems(data.items || []);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   }, []);

@@ -33,7 +33,11 @@ const navigation = [
     href: '/gastos-operacion',
     title: 'Gastos de Operación',
     hint: 'Administrativos y fijos',
-    matchPrefix: '/gastos-operacion'
+    matchPrefix: '/gastos-operacion',
+    subItems: [
+      { href: '/gastos-operacion', label: 'Gastos registrados' },
+      { href: '/gastos-operacion/cuentas-por-pagar', label: 'Cuentas por Pagar' }
+    ]
   },
   {
     href: '/ventas/listado',

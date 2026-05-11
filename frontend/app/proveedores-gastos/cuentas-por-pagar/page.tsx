@@ -96,7 +96,7 @@ export default function CuentasPorPagarPage() {
 
   const load = useCallback(async () => {
     try {
-      const data = await fetchFromApi('/api/payables');
+      const data = await fetchFromApi('/api/payables?source=Cuenta%20por%20Pagar');
       setItems(data.items || []);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   }, []);
