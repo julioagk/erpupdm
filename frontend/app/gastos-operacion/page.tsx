@@ -250,6 +250,41 @@ export default function OperationalExpensesPage() {
       subtitle="Control integral de costos fijos, luz, agua, nómina y administración."
     >
       <section className="stack">
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '12px' }}>
+          <a 
+            href="/gastos-operacion" 
+            style={{ 
+              padding: '10px 18px', 
+              borderRadius: '20px', 
+              border: '1px solid var(--line)',
+              background: '#e2e8f0',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              color: 'inherit'
+            }}
+          >
+            📊 Egresos Confirmados
+          </a>
+          <a 
+            href="/gastos-operacion/cuentas-por-pagar" 
+            style={{ 
+              padding: '10px 18px', 
+              borderRadius: '20px', 
+              border: '1px solid var(--line)',
+              background: '#fff',
+              fontWeight: 400,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              color: 'inherit'
+            }}
+          >
+            💳 Cuentas por Pagar
+          </a>
+        </div>
+
         <ListTable
           title="Egresos Operacionales"
           description={`${invoices.length} facturas operativas registradas.`}
